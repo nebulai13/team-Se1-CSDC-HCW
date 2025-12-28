@@ -313,6 +313,4 @@ For issues or questions, please refer to the documentation in the `docs/` direct
 
 ---
 
-**Generated with Claude Code** | LibSearch v1.0.0
-
 Coders qwitch13(nebulai13) & zahieddo
