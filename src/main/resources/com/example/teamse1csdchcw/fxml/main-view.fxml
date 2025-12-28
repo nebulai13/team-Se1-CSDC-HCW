@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.teamse1csdchcw.ui.controller.MainController"
+            prefHeight="800.0" prefWidth="1200.0"
+            stylesheets="@../css/main.css">
+
+    <!-- Top: Menu Bar -->
+    <top>
+        <VBox>
+            <MenuBar>
+                <Menu text="File">
+                    <MenuItem text="New Session" onAction="#onNewSession"/>
+                    <MenuItem text="Open Session..." onAction="#onOpenSession"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Export Results..." onAction="#onExportResults"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Exit" onAction="#onExit"/>
+                </Menu>
+                <Menu text="Search">
+                    <MenuItem text="New Search" onAction="#onNewSearch" accelerator="Ctrl+N"/>
+                    <MenuItem text="Advanced Search..." onAction="#onAdvancedSearch" accelerator="Ctrl+Shift+F"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Clear Results" onAction="#onClearResults"/>
+                    <MenuItem text="Search History..." onAction="#onShowHistory"/>
+                </Menu>
+                <Menu text="Bookmarks">
+                    <MenuItem text="Bookmark Selected" onAction="#onBookmarkSelected" accelerator="Ctrl+D"/>
+                    <MenuItem text="Manage Bookmarks..." onAction="#onManageBookmarks" accelerator="Ctrl+B"/>
+                </Menu>
+                <Menu text="Tools">
+                    <MenuItem text="Download Manager..." onAction="#onDownloadManager"/>
+                    <MenuItem text="Index Manager..." onAction="#onIndexManager"/>
+                    <MenuItem text="Settings..." onAction="#onSettings"/>
+                </Menu>
+                <Menu text="Help">
+                    <MenuItem text="User Guide" onAction="#onUserGuide"/>
+                    <MenuItem text="About" onAction="#onAbout"/>
+                </Menu>
+            </MenuBar>
+
+            <!-- Search Panel -->
+            <fx:include source="search-panel.fxml"/>
+        </VBox>
+    </top>
+
+    <!-- Left: Source Status Sidebar -->
+    <left>
+        <VBox styleClass="sidebar" prefWidth="220.0" spacing="10">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10"/>
+            </padding>
+
+            <Label text="Search Sources" styleClass="sidebar-title"/>
+            <Separator/>
+
+            <ListView fx:id="sourceListView" VBox.vgrow="ALWAYS"/>
+
+            <Separator/>
+
+            <VBox spacing="5">
+                <Label text="Session Info" styleClass="info-label"/>
+                <Label fx:id="sessionNameLabel" text="Session: Default" styleClass="info-value"/>
+                <Label fx:id="resultsCountLabel" text="Results: 0" styleClass="info-value"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- Center: Results Table -->
+    <center>
+        <VBox>
+            <!-- Results toolbar -->
+            <HBox styleClass="toolbar" spacing="10" alignment="CENTER_LEFT">
+                <padding>
+                    <Insets top="5" right="10" bottom="5" left="10"/>
+                </padding>
+
+                <Label text="Results:"/>
+                <Label fx:id="resultsSummaryLabel" text="0 papers"/>
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <Label text="Sort by:"/>
+                <ComboBox fx:id="sortComboBox" prefWidth="150">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <String fx:value="Relevance"/>
+                            <String fx:value="Citation Count"/>
+                            <String fx:value="Publication Date"/>
+                            <String fx:value="Title"/>
+                        </FXCollections>
+                    </items>
+                </ComboBox>
+
+                <Label text="Filter:"/>
+                <ComboBox fx:id="typeFilterComboBox" prefWidth="120">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <String fx:value="All Types"/>
+                            <String fx:value="Article"/>
+                            <String fx:value="Conference"/>
+                            <String fx:value="Thesis"/>
+                            <String fx:value="Book"/>
+                        </FXCollections>
+                    </items>
+                </ComboBox>
+            </HBox>
+
+            <!-- Results table -->
+            <fx:include source="results-table.fxml" VBox.vgrow="ALWAYS"/>
+        </VBox>
+    </center>
+
+    <!-- Bottom: Status Bar -->
+    <bottom>
+        <HBox styleClass="status-bar" spacing="10" alignment="CENTER_LEFT">
+            <padding>
+                <Insets top="5" right="10" bottom="5" left="10"/>
+            </padding>
+
+            <Label fx:id="statusLabel" text="Ready"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <ProgressIndicator fx:id="progressIndicator" visible="false" prefHeight="20" prefWidth="20"/>
+            <Label fx:id="searchTimeLabel" text=""/>
+        </HBox>
+    </bottom>
+
+</BorderPane>
