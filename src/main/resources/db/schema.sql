@@ -3,11 +3,10 @@
 
 -- Session tracking
 CREATE TABLE IF NOT EXISTS sessions (
-    session_id TEXT PRIMARY KEY,
-    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ended_at TIMESTAMP,
-    query_count INTEGER DEFAULT 0,
-    result_count INTEGER DEFAULT 0,
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_accessed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     metadata TEXT -- JSON
 );
 
@@ -20,7 +19,7 @@ CREATE TABLE IF NOT EXISTS search_history (
     sources TEXT, -- JSON array of source types
     result_count INTEGER DEFAULT 0,
     executed_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+    FOREIGN KEY (session_id) REFERENCES sessions(id)
 );
 CREATE INDEX IF NOT EXISTS idx_search_history_session ON search_history(session_id);
 CREATE INDEX IF NOT EXISTS idx_search_history_time ON search_history(executed_at);
@@ -124,7 +123,7 @@ CREATE TABLE IF NOT EXISTS journal (
     entry_type TEXT NOT NULL, -- SEARCH_START, SEARCH_RESULT, DOWNLOAD, ERROR, etc.
     timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     data TEXT NOT NULL, -- JSON
-    FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+    FOREIGN KEY (session_id) REFERENCES sessions(id)
 );
 CREATE INDEX IF NOT EXISTS idx_journal_session ON journal(session_id);
 CREATE INDEX IF NOT EXISTS idx_journal_type ON journal(entry_type);

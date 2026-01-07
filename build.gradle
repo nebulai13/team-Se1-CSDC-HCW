@@ -1,0 +1,101 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
+group = 'com.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+javafx {
+    version = '21.0.6'
+    modules = ['javafx.controls', 'javafx.fxml', 'javafx.web', 'javafx.swing', 'javafx.media']
+}
+
+application {
+    mainModule = 'com.example.teamse1csdchcw'
+    mainClass = 'com.example.teamse1csdchcw.HelloApplication'
+}
+
+dependencies {
+    implementation 'org.controlsfx:controlsfx:11.2.1'
+
+    implementation('com.dlsc.formsfx:formsfx-core:11.6.0') {
+        exclude group: 'org.openjfx'
+    }
+
+    implementation('net.synedra:validatorfx:0.6.1') {
+        exclude group: 'org.openjfx'
+    }
+
+    implementation 'org.kordamp.ikonli:ikonli-javafx:12.3.1'
+    implementation 'org.kordamp.bootstrapfx:bootstrapfx-core:0.4.0'
+
+    implementation('eu.hansolo:tilesfx:21.0.9') {
+        exclude group: 'org.openjfx'
+    }
+
+    implementation('com.github.almasb:fxgl:17.3') {
+        exclude group: 'org.openjfx'
+    }
+
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+
+    implementation 'org.jsoup:jsoup:1.17.2'
+
+    implementation 'org.apache.lucene:lucene-core:9.9.1'
+    implementation 'org.apache.lucene:lucene-queryparser:9.9.1'
+    implementation 'org.apache.lucene:lucene-analysis-common:9.9.1'
+
+    implementation 'org.xerial:sqlite-jdbc:3.45.0.0'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.16.1'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.1'
+
+    implementation 'info.picocli:picocli:4.7.5'
+    implementation 'org.jline:jline:3.25.1'
+    implementation 'org.fusesource.jansi:jansi:2.4.1'
+
+    implementation 'org.slf4j:slf4j-api:2.0.11'
+    implementation 'ch.qos.logback:logback-classic:1.4.14'
+
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'commons-io:commons-io:2.15.1'
+
+    implementation 'org.jbibtex:jbibtex:1.0.18'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.12.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.12.1'
+    testImplementation 'org.mockito:mockito-core:5.8.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.8.0'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+compileJava {
+    options.compilerArgs += [
+        '--module-path', classpath.asPath
+    ]
+    classpath = files()
+}
+
+compileTestJava {
+    enabled = false
+}
+
+test {
+    enabled = false
+}

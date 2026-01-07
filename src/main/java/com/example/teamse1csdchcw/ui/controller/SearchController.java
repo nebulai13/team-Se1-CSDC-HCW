@@ -286,4 +286,13 @@ public class SearchController {
         alert.setContentText(message);
         alert.showAndWait();
     }
+
+    /**
+     * Shutdown services and cleanup resources.
+     */
+    public void shutdown() {
+        if (searchService != null) {
+            searchService.shutdown();
+        }
+    }
 }

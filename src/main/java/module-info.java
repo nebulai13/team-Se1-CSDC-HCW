@@ -47,9 +47,6 @@ module com.example.teamse1csdchcw {
     requires org.apache.commons.lang3;
     requires org.apache.commons.io;
 
-    // BibTeX
-    requires jbibtex;
-
     // Core Java modules
     requires java.desktop;
     requires java.prefs;

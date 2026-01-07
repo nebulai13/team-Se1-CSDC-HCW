@@ -23,10 +23,13 @@ import java.io.IOException;
  */
 public class HelloApplication extends Application {
     private static final Logger logger = LoggerFactory.getLogger(HelloApplication.class);
+    private static HelloApplication instance;
+    private SearchController searchController;
 
     @Override
     public void start(Stage stage) throws IOException {
         logger.info("Starting LibSearch application");
+        instance = this;
 
         // Initialize database
         try {
@@ -44,31 +47,15 @@ public class HelloApplication extends Application {
 
         // Load main view
         try {
-            // Load main FXML
+            // Load main FXML (which includes search-panel and results-table via fx:include)
             FXMLLoader mainLoader = new FXMLLoader(
                     getClass().getResource("/com/example/teamse1csdchcw/fxml/main-view.fxml")
             );
             Parent root = mainLoader.load();
             MainController mainController = mainLoader.getController();
 
-            // Load search panel
-            FXMLLoader searchLoader = new FXMLLoader(
-                    getClass().getResource("/com/example/teamse1csdchcw/fxml/search-panel.fxml")
-            );
-            searchLoader.load();
-            SearchController searchController = searchLoader.getController();
-
-            // Load results table
-            FXMLLoader resultsLoader = new FXMLLoader(
-                    getClass().getResource("/com/example/teamse1csdchcw/fxml/results-table.fxml")
-            );
-            resultsLoader.load();
-            ResultsController resultsController = resultsLoader.getController();
-
-            // Wire up controllers
-            mainController.setSearchController(searchController);
-            mainController.setResultsController(resultsController);
-            searchController.setResultsController(resultsController);
+            // Get search controller from main controller (injected by fx:include)
+            this.searchController = mainController.getSearchController();
 
             // Create scene
             Scene scene = new Scene(root, 1200, 800);
@@ -92,6 +79,11 @@ public class HelloApplication extends Application {
      */
     private void onApplicationClose() {
         logger.info("Closing LibSearch application");
+
+        // Shutdown search service and index
+        if (searchController != null) {
+            searchController.shutdown();
+        }
 
         try {
             SQLiteConnection.getInstance().close();
@@ -121,6 +113,11 @@ public class HelloApplication extends Application {
         logger.info("Stopping LibSearch application");
         super.stop();
 
+        // Shutdown search service and index
+        if (searchController != null) {
+            searchController.shutdown();
+        }
+
         // Clean up resources
         try {
             SQLiteConnection.getInstance().close();
@@ -130,6 +127,14 @@ public class HelloApplication extends Application {
     }
 
     public static void main(String[] args) {
+        // Add shutdown hook for proper cleanup
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            logger.info("Shutdown hook triggered");
+            if (instance != null && instance.searchController != null) {
+                instance.searchController.shutdown();
+            }
+        }));
+
         if (args.length > 0) {
             int exitCode = new picocli.CommandLine(
                     new com.example.teamse1csdchcw.cli.LibSearchCLI()
