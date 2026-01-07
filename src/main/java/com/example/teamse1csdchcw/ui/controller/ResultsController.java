@@ -1,8 +1,13 @@
 package com.example.teamse1csdchcw.ui.controller;
 
+import com.example.teamse1csdchcw.domain.export.ExportFormat;
 import com.example.teamse1csdchcw.domain.search.AcademicPaper;
 import com.example.teamse1csdchcw.domain.search.AccessLevel;
 import com.example.teamse1csdchcw.domain.search.SearchResult;
+import com.example.teamse1csdchcw.domain.user.Bookmark;
+import com.example.teamse1csdchcw.repository.BookmarkRepository;
+import com.example.teamse1csdchcw.service.download.DownloadService;
+import com.example.teamse1csdchcw.service.export.CitationExportService;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -10,6 +15,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.ButtonBar;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
@@ -49,9 +55,20 @@ public class ResultsController {
     // Parent controller
     private MainController mainController;
 
+    // Services
+    private final BookmarkRepository bookmarkRepository;
+    private final DownloadService downloadService;
+    private final CitationExportService citationService;
+
     // State
     private String currentSortMode = "Relevance";
     private String currentTypeFilter = "All Types";
+
+    public ResultsController() {
+        this.bookmarkRepository = new BookmarkRepository();
+        this.downloadService = new DownloadService();
+        this.citationService = new CitationExportService();
+    }
 
     @FXML
     public void initialize() {
@@ -186,8 +203,51 @@ public class ResultsController {
             return true;
         }
 
-        // TODO: Implement type filtering based on paper keywords
-        return true;
+        if (!(result instanceof AcademicPaper paper)) {
+            return true;
+        }
+
+        String filter = currentTypeFilter.toLowerCase();
+
+        switch (filter) {
+            case "article":
+                return matchesArticle(paper);
+            case "conference":
+                return matchesConference(paper);
+            case "thesis":
+                return matchesThesis(paper);
+            case "book":
+                return matchesBook(paper);
+            default:
+                return true;
+        }
+    }
+
+    private boolean matchesArticle(AcademicPaper paper) {
+        String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
+        String journal = (paper.getJournal() != null ? paper.getJournal() : "").toLowerCase();
+        return journal.contains("journal") || journal.contains("transactions") ||
+               venue.contains("journal") || venue.contains("article") || venue.contains("letter");
+    }
+
+    private boolean matchesConference(AcademicPaper paper) {
+        String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
+        return venue.contains("conference") || venue.contains("proceedings") ||
+               venue.contains("symposium") || venue.contains("workshop");
+    }
+
+    private boolean matchesThesis(AcademicPaper paper) {
+        String title = (paper.getTitle() != null ? paper.getTitle() : "").toLowerCase();
+        String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
+        return title.contains("thesis") || title.contains("dissertation") ||
+               venue.contains("thesis") || venue.contains("dissertation");
+    }
+
+    private boolean matchesBook(AcademicPaper paper) {
+        String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
+        String journal = (paper.getJournal() != null ? paper.getJournal() : "").toLowerCase();
+        return venue.contains("book") || journal.contains("book") ||
+               venue.contains("chapter") || venue.contains("textbook");
     }
 
     /**
@@ -224,8 +284,23 @@ public class ResultsController {
             return;
         }
 
-        // TODO: Implement bookmark functionality
-        mainController.setStatus("Bookmarked " + selected.size() + " result(s)");
+        int bookmarked = 0;
+        for (SearchResult result : selected) {
+            try {
+                if (!bookmarkRepository.exists(result.getId())) {
+                    Bookmark bookmark = new Bookmark();
+                    bookmark.setResultId(result.getId());
+                    bookmark.setTitle(result.getTitle());
+                    bookmark.setUrl(result.getUrl());
+                    bookmarkRepository.save(bookmark);
+                    bookmarked++;
+                }
+            } catch (Exception e) {
+                logger.error("Failed to bookmark result", e);
+            }
+        }
+
+        mainController.setStatus("Bookmarked " + bookmarked + " result(s)");
     }
 
     /**
@@ -248,7 +323,21 @@ public class ResultsController {
     private void onDownloadPdf() {
         SearchResult selected = resultsTable.getSelectionModel().getSelectedItem();
         if (selected instanceof AcademicPaper paper && paper.getPdfUrl() != null) {
-            mainController.setStatus("Download not yet implemented");
+            String homeDir = System.getProperty("user.home");
+            String downloadDir = homeDir + "/Downloads/LibSearch";
+
+            String downloadId = downloadService.queueDownload(
+                selected.getId(),
+                paper.getPdfUrl(),
+                downloadDir
+            );
+
+            if (downloadId != null) {
+                mainController.setStatus("Download queued: " + paper.getTitle());
+                logger.info("Queued PDF download: {}", paper.getPdfUrl());
+            } else {
+                mainController.setStatus("Failed to queue download");
+            }
         } else {
             mainController.setStatus("No PDF available");
         }
@@ -258,7 +347,21 @@ public class ResultsController {
     private void onBookmark() {
         SearchResult selected = resultsTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            mainController.setStatus("Bookmark not yet implemented");
+            try {
+                if (bookmarkRepository.exists(selected.getId())) {
+                    mainController.setStatus("Already bookmarked");
+                } else {
+                    Bookmark bookmark = new Bookmark();
+                    bookmark.setResultId(selected.getId());
+                    bookmark.setTitle(selected.getTitle());
+                    bookmark.setUrl(selected.getUrl());
+                    bookmarkRepository.save(bookmark);
+                    mainController.setStatus("Added to bookmarks");
+                }
+            } catch (Exception e) {
+                logger.error("Failed to bookmark", e);
+                mainController.setStatus("Failed to bookmark");
+            }
         }
     }
 
@@ -266,8 +369,52 @@ public class ResultsController {
     private void onExportCitation() {
         SearchResult selected = resultsTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            mainController.setStatus("Export citation not yet implemented");
+            showExportDialog(selected);
         }
+    }
+
+    private void showExportDialog(SearchResult result) {
+        javafx.scene.control.ChoiceDialog<ExportFormat> dialog =
+            new javafx.scene.control.ChoiceDialog<>(ExportFormat.BIBTEX,
+                ExportFormat.BIBTEX, ExportFormat.RIS, ExportFormat.ENDNOTE);
+
+        dialog.setTitle("Export Citation");
+        dialog.setHeaderText("Choose export format");
+        dialog.setContentText("Format:");
+
+        dialog.showAndWait().ifPresent(format -> {
+            try {
+                String citation = citationService.exportSingle(result, format);
+
+                TextArea textArea = new TextArea(citation);
+                textArea.setEditable(false);
+                textArea.setWrapText(true);
+                textArea.setPrefRowCount(20);
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Export Citation");
+                alert.setHeaderText(format + " Format");
+                alert.getDialogPane().setContent(textArea);
+                alert.getDialogPane().setPrefWidth(600);
+
+                ButtonType copyButton = new ButtonType("Copy to Clipboard");
+                ButtonType closeButton = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+                alert.getButtonTypes().setAll(copyButton, closeButton);
+
+                alert.showAndWait().ifPresent(button -> {
+                    if (button == copyButton) {
+                        ClipboardContent content = new ClipboardContent();
+                        content.putString(citation);
+                        Clipboard.getSystemClipboard().setContent(content);
+                        mainController.setStatus("Citation copied to clipboard");
+                    }
+                });
+
+            } catch (Exception e) {
+                logger.error("Failed to export citation", e);
+                mainController.setStatus("Failed to export citation");
+            }
+        });
     }
 
     @FXML
@@ -425,7 +572,10 @@ public class ResultsController {
             downloadButton.setOnAction(e -> {
                 SearchResult result = getTableView().getItems().get(getIndex());
                 if (result instanceof AcademicPaper paper && paper.getPdfUrl() != null) {
-                    mainController.setStatus("Download: " + paper.getPdfUrl());
+                    String homeDir = System.getProperty("user.home");
+                    String downloadDir = homeDir + "/Downloads/LibSearch";
+                    downloadService.queueDownload(result.getId(), paper.getPdfUrl(), downloadDir);
+                    mainController.setStatus("Download queued");
                 } else {
                     mainController.setStatus("No PDF available");
                 }

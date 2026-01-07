@@ -52,6 +52,7 @@ module com.example.teamse1csdchcw {
 
     // Core Java modules
     requires java.desktop;
+    requires java.prefs;
 
     // Opens for FXML reflection
     opens com.example.teamse1csdchcw to javafx.fxml;

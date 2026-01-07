@@ -8,12 +8,14 @@ import com.example.teamse1csdchcw.repository.SearchHistoryRepository;
 import com.example.teamse1csdchcw.repository.SearchResultRepository;
 import com.example.teamse1csdchcw.service.search.FederatedSearchService;
 import com.example.teamse1csdchcw.service.search.QueryParserService;
+import com.example.teamse1csdchcw.service.index.LocalSearchService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +44,7 @@ public class SearchController {
     // Services
     private final QueryParserService queryParser;
     private final FederatedSearchService searchService;
+    private final LocalSearchService localSearchService;
     private final SearchHistoryRepository historyRepository;
     private final SearchResultRepository resultRepository;
 
@@ -55,6 +58,7 @@ public class SearchController {
     public SearchController() {
         this.queryParser = new QueryParserService();
         this.searchService = new FederatedSearchService();
+        this.localSearchService = new LocalSearchService(this.searchService.getIndexService());
         this.historyRepository = new SearchHistoryRepository();
         this.resultRepository = new SearchResultRepository();
     }
@@ -137,9 +141,19 @@ public class SearchController {
                     }
                 }
 
-                // Execute search
-                searchService.setMaxResultsPerSource(maxResults);
-                List<SearchResult> results = searchService.search(query, sources);
+                // Execute search (offline or federated)
+                List<SearchResult> results;
+                if (offlineModeCheckBox.isSelected()) {
+                    logger.info("Executing local offline search");
+                    results = localSearchService.search(query, maxResults);
+                    Platform.runLater(() -> {
+                        mainController.setStatus("Searching local index...");
+                    });
+                } else {
+                    logger.info("Executing federated online search");
+                    searchService.setMaxResultsPerSource(maxResults);
+                    results = searchService.search(query, sources);
+                }
 
                 long searchTime = System.currentTimeMillis() - startTime;
 
@@ -153,11 +167,15 @@ public class SearchController {
                 }
 
                 // Update UI
+                final boolean wasOffline = offlineModeCheckBox.isSelected();
                 Platform.runLater(() -> {
                     resultsController.setResults(results);
                     mainController.updateResultsCount(results.size());
-                    mainController.setStatus("Search completed: " + results.size() + " results from " +
-                            sources.size() + " sources");
+
+                    String statusMsg = wasOffline
+                            ? "Search completed: " + results.size() + " results from local index"
+                            : "Search completed: " + results.size() + " results from " + sources.size() + " sources";
+                    mainController.setStatus(statusMsg);
                     mainController.setSearchTime(searchTime);
 
                     logger.info("Search completed: {} results in {}ms", results.size(), searchTime);
@@ -168,6 +186,15 @@ public class SearchController {
                 Platform.runLater(() -> {
                     showError("Search Failed", "Search failed: " + e.getMessage());
                     mainController.setStatus("Search failed");
+                });
+
+            } catch (IOException e) {
+                logger.error("Local search failed", e);
+                Platform.runLater(() -> {
+                    showError("Local Search Failed",
+                            "Failed to search local index: " + e.getMessage() +
+                            "\n\nTry searching online or rebuild the index.");
+                    mainController.setStatus("Local search failed");
                 });
 
             } catch (Exception e) {

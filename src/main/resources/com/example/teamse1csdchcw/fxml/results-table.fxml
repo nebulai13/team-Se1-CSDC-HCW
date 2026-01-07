@@ -45,22 +45,22 @@
         <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
         </columnResizePolicy>
-    </TableView>
 
-    <!-- Context menu for table rows -->
-    <contextMenu>
-        <ContextMenu fx:id="rowContextMenu">
-            <items>
-                <MenuItem text="Open URL" onAction="#onOpenUrl"/>
-                <MenuItem text="Download PDF" onAction="#onDownloadPdf"/>
-                <SeparatorMenuItem/>
-                <MenuItem text="Bookmark" onAction="#onBookmark"/>
-                <MenuItem text="Export Citation..." onAction="#onExportCitation"/>
-                <SeparatorMenuItem/>
-                <MenuItem text="View Details" onAction="#onViewDetails"/>
-                <MenuItem text="Copy DOI" onAction="#onCopyDoi"/>
-            </items>
-        </ContextMenu>
-    </contextMenu>
+        <!-- Context menu for table rows -->
+        <contextMenu>
+            <ContextMenu fx:id="rowContextMenu">
+                <items>
+                    <MenuItem text="Open URL" onAction="#onOpenUrl"/>
+                    <MenuItem text="Download PDF" onAction="#onDownloadPdf"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="Bookmark" onAction="#onBookmark"/>
+                    <MenuItem text="Export Citation..." onAction="#onExportCitation"/>
+                    <SeparatorMenuItem/>
+                    <MenuItem text="View Details" onAction="#onViewDetails"/>
+                    <MenuItem text="Copy DOI" onAction="#onCopyDoi"/>
+                </items>
+            </ContextMenu>
+        </contextMenu>
+    </TableView>
 
 </VBox>

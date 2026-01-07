@@ -6,10 +6,12 @@ import com.example.teamse1csdchcw.domain.source.SourceType;
 import com.example.teamse1csdchcw.exception.SearchException;
 import com.example.teamse1csdchcw.service.connector.ConnectorFactory;
 import com.example.teamse1csdchcw.service.connector.SourceConnector;
+import com.example.teamse1csdchcw.service.index.IndexService;
 import com.example.teamse1csdchcw.util.http.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -28,16 +30,25 @@ public class FederatedSearchService {
     private final ResultAggregator resultAggregator;
     private final RateLimiter rateLimiter;
     private final ExecutorService executorService;
+    private IndexService indexService;
 
     private int maxResultsPerSource = DEFAULT_MAX_RESULTS;
     private int timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
     private int maxConcurrentSources = DEFAULT_MAX_CONCURRENT;
+    private boolean autoIndexEnabled = true;
 
     public FederatedSearchService() {
         this.connectorFactory = ConnectorFactory.getInstance();
         this.resultAggregator = new ResultAggregator();
         this.rateLimiter = RateLimiter.getInstance();
         this.executorService = Executors.newFixedThreadPool(DEFAULT_MAX_CONCURRENT);
+
+        try {
+            this.indexService = new IndexService();
+        } catch (IOException e) {
+            logger.warn("Failed to initialize IndexService, auto-indexing disabled: {}", e.getMessage());
+            this.autoIndexEnabled = false;
+        }
     }
 
     public FederatedSearchService(ConnectorFactory connectorFactory, ResultAggregator resultAggregator) {
@@ -135,6 +146,15 @@ public class FederatedSearchService {
                     .collect(Collectors.toList());
 
             List<SearchResult> aggregatedResults = resultAggregator.aggregate(allResults);
+
+            if (autoIndexEnabled && indexService != null && !aggregatedResults.isEmpty()) {
+                try {
+                    indexService.indexResults(aggregatedResults);
+                    logger.debug("Auto-indexed {} results", aggregatedResults.size());
+                } catch (IOException e) {
+                    logger.error("Failed to auto-index results: {}", e.getMessage());
+                }
+            }
 
             long totalDuration = System.currentTimeMillis() - startTime;
             logger.info("Federated search completed: {} total results from {} sources in {}ms",
@@ -234,6 +254,18 @@ public class FederatedSearchService {
         this.maxConcurrentSources = maxConcurrentSources;
     }
 
+    public void setAutoIndexEnabled(boolean autoIndexEnabled) {
+        this.autoIndexEnabled = autoIndexEnabled;
+    }
+
+    public boolean isAutoIndexEnabled() {
+        return autoIndexEnabled;
+    }
+
+    public IndexService getIndexService() {
+        return indexService;
+    }
+
     /**
      * Shutdown the service.
      */
@@ -247,6 +279,14 @@ public class FederatedSearchService {
         } catch (InterruptedException e) {
             executorService.shutdownNow();
             Thread.currentThread().interrupt();
+        }
+
+        if (indexService != null) {
+            try {
+                indexService.close();
+            } catch (IOException e) {
+                logger.error("Failed to close IndexService: {}", e.getMessage());
+            }
         }
     }
 

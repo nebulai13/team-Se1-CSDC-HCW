@@ -130,6 +130,13 @@ public class HelloApplication extends Application {
     }
 
     public static void main(String[] args) {
-        launch(args);
+        if (args.length > 0) {
+            int exitCode = new picocli.CommandLine(
+                    new com.example.teamse1csdchcw.cli.LibSearchCLI()
+            ).execute(args);
+            System.exit(exitCode);
+        } else {
+            launch(args);
+        }
     }
 }
