@@ -36,9 +36,9 @@ public class MainController {
     @FXML private ProgressIndicator progressIndicator;
     @FXML private Label searchTimeLabel;
 
-    // Controllers (injected by FXMLLoader)
-    private SearchController searchController;
-    private ResultsController resultsController;
+    // Controllers (injected by FXMLLoader via fx:include fx:id)
+    @FXML private SearchController searchPanelController;
+    @FXML private ResultsController resultsTableController;
 
     // Services
     private final SessionRepository sessionRepository;
@@ -56,6 +56,17 @@ public class MainController {
     @FXML
     public void initialize() {
         logger.info("Initializing MainController");
+
+        // Wire up included controllers
+        if (searchPanelController != null) {
+            searchPanelController.setMainController(this);
+        }
+        if (resultsTableController != null) {
+            resultsTableController.setMainController(this);
+        }
+        if (searchPanelController != null && resultsTableController != null) {
+            searchPanelController.setResultsController(resultsTableController);
+        }
 
         // Initialize session
         initializeSession();
@@ -191,8 +202,8 @@ public class MainController {
                 logger.info("Created new session: {}", name);
 
                 // Clear results
-                if (resultsController != null) {
-                    resultsController.clearResults();
+                if (resultsTableController != null) {
+                    resultsTableController.clearResults();
                 }
                 updateResultsCount(0);
 
@@ -222,22 +233,22 @@ public class MainController {
 
     @FXML
     private void onNewSearch() {
-        if (searchController != null) {
-            searchController.focusSearchField();
+        if (searchPanelController != null) {
+            searchPanelController.focusSearchField();
         }
     }
 
     @FXML
     private void onAdvancedSearch() {
-        if (searchController != null) {
-            searchController.showAdvancedSearch();
+        if (searchPanelController != null) {
+            searchPanelController.showAdvancedSearch();
         }
     }
 
     @FXML
     private void onClearResults() {
-        if (resultsController != null) {
-            resultsController.clearResults();
+        if (resultsTableController != null) {
+            resultsTableController.clearResults();
             updateResultsCount(0);
             setStatus("Results cleared");
         }
@@ -250,8 +261,8 @@ public class MainController {
 
     @FXML
     private void onBookmarkSelected() {
-        if (resultsController != null) {
-            resultsController.bookmarkSelected();
+        if (resultsTableController != null) {
+            resultsTableController.bookmarkSelected();
         }
     }
 
@@ -294,17 +305,17 @@ public class MainController {
     }
 
     private void onSortChanged() {
-        if (resultsController != null) {
+        if (resultsTableController != null) {
             String sort = sortComboBox.getValue();
-            resultsController.setSortMode(sort);
+            resultsTableController.setSortMode(sort);
             setStatus("Sorted by: " + sort);
         }
     }
 
     private void onFilterChanged() {
-        if (resultsController != null) {
+        if (resultsTableController != null) {
             String filter = typeFilterComboBox.getValue();
-            resultsController.setTypeFilter(filter);
+            resultsTableController.setTypeFilter(filter);
             setStatus("Filtered by type: " + filter);
         }
     }
@@ -326,13 +337,21 @@ public class MainController {
      * Set child controllers (called by parent loader).
      */
     public void setSearchController(SearchController searchController) {
-        this.searchController = searchController;
+        this.searchPanelController = searchController;
         searchController.setMainController(this);
     }
 
     public void setResultsController(ResultsController resultsController) {
-        this.resultsController = resultsController;
+        this.resultsTableController = resultsController;
         resultsController.setMainController(this);
+    }
+
+    public SearchController getSearchController() {
+        return searchPanelController;
+    }
+
+    public ResultsController getResultsController() {
+        return resultsTableController;
     }
 
     /**

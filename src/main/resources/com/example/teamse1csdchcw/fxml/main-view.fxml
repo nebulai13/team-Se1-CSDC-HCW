@@ -47,7 +47,7 @@
             </MenuBar>
 
             <!-- Search Panel -->
-            <fx:include source="search-panel.fxml"/>
+            <fx:include fx:id="searchPanel" source="search-panel.fxml"/>
         </VBox>
     </top>
 
@@ -113,7 +113,7 @@
             </HBox>
 
             <!-- Results table -->
-            <fx:include source="results-table.fxml" VBox.vgrow="ALWAYS"/>
+            <fx:include fx:id="resultsTable" source="results-table.fxml" VBox.vgrow="ALWAYS"/>
         </VBox>
     </center>
 

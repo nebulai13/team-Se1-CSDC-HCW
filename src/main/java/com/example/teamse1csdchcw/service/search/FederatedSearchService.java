@@ -282,11 +282,7 @@ public class FederatedSearchService {
         }
 
         if (indexService != null) {
-            try {
-                indexService.close();
-            } catch (IOException e) {
-                logger.error("Failed to close IndexService: {}", e.getMessage());
-            }
+            indexService.shutdown();
         }
     }
 
