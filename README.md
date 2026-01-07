@@ -89,24 +89,77 @@ team-Se1-CSDC-HCW/
 - [x] Rate limiter
 - [x] Logging configuration
 
-### 🚧 Phase 2: Core Search (IN PROGRESS)
+### ✅ Phase 2: Core Search (COMPLETE)
 - [x] QueryParserService (grep-like syntax)
 - [x] SourceConnector interface
 - [x] ArxivConnector implemented
-- [ ] PubMedConnector
-- [ ] CrossRefConnector
-- [ ] FederatedSearchService
-- [ ] ResultAggregator
-- [ ] Repository implementations
+- [x] PubMedConnector implemented
+- [x] CrossRefConnector implemented
+- [x] SemanticScholarConnector implemented
+- [x] FederatedSearchService implemented
+- [x] ResultAggregator implemented
+- [x] Repository implementations complete
+
+### ✅ Phase 3: JavaFX GUI (COMPLETE)
+- [x] Main application window (BorderPane layout)
+- [x] Search panel with filters
+- [x] Results table with columns
+- [x] Controllers (MainController, SearchController, ResultsController)
+- [x] FXML layouts
+- [x] CSS styling
+- [x] Menu bar with actions
+
+### ✅ Phase 4: Advanced Features (COMPLETE)
+- [x] Bookmark system with repository
+- [x] PDF download service with queue management
+- [x] Citation export (BibTeX, RIS, EndNote, JSON, Markdown)
+- [x] Download progress tracking
+- [x] Bookmark persistence and retrieval
+- [x] Citation format selection dialog
+- [x] UI integration for all features
+
+### ✅ Phase 5: Local Indexing (COMPLETE)
+- [x] IndexService with Lucene integration
+- [x] Auto-indexing of search results
+- [x] LocalSearchService for offline queries
+- [x] Full-text search with field-specific indexing
+- [x] Offline mode toggle in UI
+- [x] Year range and author filtering in local search
+- [x] Index statistics and management
+
+### ✅ Phase 6: CLI/REPL (COMPLETE)
+- [x] Picocli command framework
+- [x] Search command with multiple output formats
+- [x] Bookmark management commands
+- [x] Index management commands
+- [x] Interactive REPL mode with JLine3
+- [x] Command-line argument parsing
+- [x] Dual-mode application (GUI/CLI)
+
+### ✅ Phase 7: Networking (COMPLETE)
+- [x] Proxy configuration service (HTTP/SOCKS)
+- [x] Network diagnostics utilities
+- [x] Connection testing and retry logic
+- [x] Network CLI commands
+- [x] System proxy integration
+- [x] Connection health monitoring
+
+### ✅ Phase 8: Monitoring & Alerts (COMPLETE)
+- [x] Alert configuration and repository
+- [x] Keyword monitoring service
+- [x] Notification system (console/log/email)
+- [x] Monitor CLI commands
+- [x] Integration with search service
+- [x] Alert status tracking
+
+### ✅ Phase 9: Journaling & Session Management (COMPLETE)
+- [x] Session service and tracking
+- [x] Journal/activity logging service
+- [x] Session CLI commands
+- [x] Activity history viewing
+- [x] Session statistics
 
 ### 📋 Upcoming Phases
-- Phase 3: JavaFX GUI
-- Phase 4: Advanced Features (downloads, bookmarks, citations)
-- Phase 5: Local Indexing (Lucene)
-- Phase 6: CLI/REPL
-- Phase 7: Networking (VPN support)
-- Phase 8: Monitoring & Alerts
-- Phase 9: Journaling & Session Management
 - Phase 10: Polish & Documentation
 
 ## Building and Running
