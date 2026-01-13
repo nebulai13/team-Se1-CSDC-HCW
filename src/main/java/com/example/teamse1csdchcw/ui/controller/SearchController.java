@@ -11,9 +11,20 @@ import com.example.teamse1csdchcw.service.search.QueryParserService;
 import com.example.teamse1csdchcw.service.index.LocalSearchService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TitledPane;
+import javafx.scene.control.Alert;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
+
+
+import java.util.UUID;
+
 
 import java.io.IOException;
 import java.sql.SQLException;
@@ -105,7 +116,13 @@ public class SearchController {
         long startTime = System.currentTimeMillis();
 
         new Thread(() -> {
+            // IMPORTANT: MDC is thread-local -> set sid INSIDE this thread
+            String sid = UUID.randomUUID().toString().substring(0, 8);
+            MDC.put("sid", sid);
+
             try {
+                logger.info("Search started: query='{}'", queryText);
+
                 // Parse query
                 SearchQuery query = queryParser.parse(queryText);
                 logger.info("Parsed query: {}", query.getOriginalQuery());
@@ -145,10 +162,8 @@ public class SearchController {
                 List<SearchResult> results;
                 if (offlineModeCheckBox.isSelected()) {
                     logger.info("Executing local offline search");
+                    Platform.runLater(() -> mainController.setStatus("Searching local index..."));
                     results = localSearchService.search(query, maxResults);
-                    Platform.runLater(() -> {
-                        mainController.setStatus("Searching local index...");
-                    });
                 } else {
                     logger.info("Executing federated online search");
                     searchService.setMaxResultsPerSource(maxResults);
@@ -193,7 +208,7 @@ public class SearchController {
                 Platform.runLater(() -> {
                     showError("Local Search Failed",
                             "Failed to search local index: " + e.getMessage() +
-                            "\n\nTry searching online or rebuild the index.");
+                                    "\n\nTry searching online or rebuild the index.");
                     mainController.setStatus("Local search failed");
                 });
 
@@ -205,11 +220,13 @@ public class SearchController {
                 });
 
             } finally {
+                MDC.remove("sid");
                 Platform.runLater(this::resetSearchUI);
             }
 
         }, "SearchThread").start();
     }
+
 
     /**
      * Get selected search sources from checkboxes.

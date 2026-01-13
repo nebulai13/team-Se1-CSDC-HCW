@@ -3,7 +3,8 @@
     <!-- Console appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [sid=%X{sid}] - %msg%n</pattern>
+
         </encoder>
     </appender>
 
@@ -17,15 +18,18 @@
             <totalSizeCap>50MB</totalSizeCap>
         </rollingPolicy>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [sid=%X{sid}] - %msg%n</pattern>
+
         </encoder>
     </appender>
 
     <!-- Package-specific logging levels -->
     <logger name="com.example.teamse1csdchcw.service" level="INFO"/>
-    <logger name="com.example.teamse1csdchcw.connector" level="DEBUG"/>
-    <logger name="com.example.teamse1csdchcw.repository" level="TRACE"/>
-    <logger name="com.example.teamse1csdchcw.ui" level="ERROR"/>
+    <logger name="com.example.teamse1csdchcw.service.connector" level="DEBUG"/>
+    <logger name="com.example.teamse1csdchcw.repository" level="DEBUG"/>
+    <logger name="com.example.teamse1csdchcw.repository.sqlite" level="INFO"/>
+    <logger name="com.example.teamse1csdchcw.ui" level="INFO"/>
+
 
     <!-- Root logger -->
     <root level="INFO">

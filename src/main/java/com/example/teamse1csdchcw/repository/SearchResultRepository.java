@@ -100,37 +100,98 @@ public class SearchResultRepository {
             throw new SQLException("Failed to save search result", e);
         }
     }
+    private void save(SearchResult result, String sessionId, Connection conn) throws SQLException {
+        String sql = """
+        INSERT INTO search_results
+        (id, session_id, title, authors, url, snippet, source, access_level,
+         relevance, doi, arxiv_id, pmid, abstract_text, publication_date,
+         journal, venue, keywords, citation_count, pdf_url, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+            relevance = excluded.relevance,
+            access_level = excluded.access_level,
+            citation_count = excluded.citation_count,
+            pdf_url = excluded.pdf_url
+        """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, result.getId());
+            stmt.setString(2, sessionId);
+            stmt.setString(3, result.getTitle());
+            stmt.setString(4, result.getAuthors());
+            stmt.setString(5, result.getUrl());
+            stmt.setString(6, result.getSnippet());
+            stmt.setString(7, result.getSource().name());
+            stmt.setString(8, result.getAccessLevel().name());
+            stmt.setDouble(9, result.getRelevance());
+
+            if (result instanceof AcademicPaper paper) {
+                stmt.setString(10, paper.getDoi());
+                stmt.setString(11, paper.getArxivId());
+                stmt.setString(12, paper.getPmid());
+                stmt.setString(13, paper.getAbstractText());
+
+                if (paper.getPublicationDate() != null) {
+                    stmt.setString(14, paper.getPublicationDate().toString());
+                } else {
+                    stmt.setNull(14, Types.VARCHAR);
+                }
+
+                stmt.setString(15, paper.getJournal());
+                stmt.setString(16, paper.getVenue());
+
+                if (paper.getKeywords() != null && !paper.getKeywords().isEmpty()) {
+                    try {
+                        stmt.setString(17, objectMapper.writeValueAsString(paper.getKeywords()));
+                    } catch (Exception ex) {
+                        throw new SQLException("Failed to serialize keywords", ex);
+                    }
+                } else {
+                    stmt.setNull(17, Types.VARCHAR);
+                }
+
+                stmt.setInt(18, paper.getCitationCount());
+                stmt.setString(19, paper.getPdfUrl());
+            } else {
+                for (int i = 10; i <= 19; i++) {
+                    stmt.setNull(i, Types.VARCHAR);
+                }
+            }
+
+            stmt.setString(20, result.getTimestamp().toString());
+            stmt.executeUpdate();
+        }
+    }
+
+
 
     /**
      * Save multiple search results in a batch.
      */
     public void saveAll(List<SearchResult> results, String sessionId) throws SQLException {
-        Connection conn = null;
-        try {
-            conn = SQLiteConnection.getInstance().getConnection();
+        try (Connection conn = SQLiteConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
 
-            for (SearchResult result : results) {
-                save(result, sessionId);
-            }
+            try {
+                for (SearchResult result : results) {
+                    save(result, sessionId, conn); // gleiche Connection!
+                }
 
-            conn.commit();
-            logger.info("Saved {} search results for session {}", results.size(), sessionId);
-        } catch (SQLException e) {
-            if (conn != null) {
+                conn.commit();
+                logger.info("Saved {} search results for session {}", results.size(), sessionId);
+            } catch (SQLException e) {
                 try {
                     conn.rollback();
                 } catch (SQLException ex) {
                     logger.error("Failed to rollback transaction", ex);
                 }
-            }
-            throw e;
-        } finally {
-            if (conn != null) {
+                throw e;
+            } finally {
                 conn.setAutoCommit(true);
             }
         }
     }
+
 
     /**
      * Find results by session ID.
