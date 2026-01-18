@@ -69,7 +69,9 @@ public class SQLiteConnection {
             String url = "jdbc:sqlite:" + dbPath;
             connection = DriverManager.getConnection(url);
             connection.setAutoCommit(true);
-            logger.debug("Established database connection: {}", dbPath);
+            logger.info("SQLite DB path in use: {}", dbPath);
+
+            logger.info("Established database connection: {}", dbPath);
 
             // Enable foreign keys
             try (var stmt = connection.createStatement()) {

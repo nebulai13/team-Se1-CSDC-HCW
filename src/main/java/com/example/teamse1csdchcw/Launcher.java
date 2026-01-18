@@ -4,11 +4,15 @@ import javafx.application.Application;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.example.teamse1csdchcw.repository.sqlite.DatabaseInitializer;
+
 
 public class Launcher {
     public static void main(String[] args) {
         ensureAppDirectories();
+        DatabaseInitializer.initialize();
         Application.launch(HelloApplication.class, args);
+
     }
 
     private static void ensureAppDirectories() {

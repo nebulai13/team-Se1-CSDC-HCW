@@ -1,11 +1,6 @@
 #!/usr/bin/env bash
 
-# Fail fast if gradlew is missing or not executable
 if [ ! -x "./gradlew" ]; then
   echo "gradlew not found or not executable"
   exit 1
 fi
-
-export JAVA_HOME="/opt/homebrew/Cellar/openjdk@21/21.0.9/libexec/openjdk.jdk/Contents/Home"
-
-./gradlew run
