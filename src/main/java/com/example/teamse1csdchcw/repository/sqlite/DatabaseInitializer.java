@@ -11,6 +11,7 @@ import java.sql.Connection;
 import java.sql.Statement;
 import java.util.stream.Collectors;
 
+
 /**
  * Initializes the SQLite database with the required schema.
  */
@@ -43,8 +44,16 @@ public class DatabaseInitializer {
             try (Connection conn = sqliteConnection.getConnection();
                  Statement stmt = conn.createStatement()) {
 
-                // Execute schema creation
-                stmt.execute(schema);
+                // WICHTIG: jedes SQL-Statement einzeln ausführen
+                String[] statements = schema.split(";");
+
+                for (String s : statements) {
+                    String sql = s.trim();
+                    if (!sql.isEmpty()) {
+                        stmt.execute(sql);
+                    }
+                }
+
                 logger.info("Database schema initialized successfully");
 
             }
@@ -53,6 +62,7 @@ public class DatabaseInitializer {
             throw new RuntimeException("Database initialization failed", e);
         }
     }
+
 
     /**
      * Loads the SQL schema from resources.

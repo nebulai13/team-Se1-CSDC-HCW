@@ -73,6 +73,23 @@ public class BookmarkRepository {
             throw e;
         }
     }
+    public int deleteByResultId(String resultId) throws SQLException {
+        String sql = "DELETE FROM bookmarks WHERE result_id = ?";
+
+        try (Connection conn = SQLiteConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, resultId);
+            int deleted = stmt.executeUpdate();
+            logger.info("Deleted {} bookmark(s) for result_id={}", deleted, resultId);
+            return deleted;
+
+        } catch (SQLException e) {
+            logger.error("Failed to delete bookmark by result_id", e);
+            throw e;
+        }
+    }
+
 
     public List<Bookmark> findAll() throws SQLException {
         String sql = "SELECT * FROM bookmarks ORDER BY created_at DESC";
