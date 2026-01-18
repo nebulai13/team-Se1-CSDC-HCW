@@ -2,7 +2,6 @@ package com.example.teamse1csdchcw.ui.controller;
 
 import com.example.teamse1csdchcw.domain.export.ExportFormat;
 import com.example.teamse1csdchcw.domain.search.AcademicPaper;
-import com.example.teamse1csdchcw.domain.search.AccessLevel;
 import com.example.teamse1csdchcw.domain.search.SearchResult;
 import com.example.teamse1csdchcw.domain.user.Bookmark;
 import com.example.teamse1csdchcw.repository.BookmarkRepository;
@@ -15,8 +14,6 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
@@ -26,7 +23,9 @@ import org.slf4j.LoggerFactory;
 import java.awt.Desktop;
 import java.net.URI;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,6 +50,9 @@ public class ResultsController {
     // Data
     private final ObservableList<SearchResult> results = FXCollections.observableArrayList();
     private final ObservableList<SearchResult> filteredResults = FXCollections.observableArrayList();
+
+    // Bookmark cache (stores result IDs that are bookmarked)
+    private final Set<String> bookmarkedResultIds = new HashSet<>();
 
     // Parent controller
     private MainController mainController;
@@ -105,7 +107,7 @@ public class ResultsController {
 
         // Title column
         titleColumn.setCellValueFactory(cellData ->
-            new SimpleStringProperty(cellData.getValue().getTitle()));
+                new SimpleStringProperty(cellData.getValue().getTitle()));
         titleColumn.setCellFactory(col -> new TitleCell());
 
         // Authors column
@@ -129,12 +131,12 @@ public class ResultsController {
 
         // Source column
         sourceColumn.setCellValueFactory(cellData ->
-            new SimpleStringProperty(cellData.getValue().getSource().getDisplayName()));
+                new SimpleStringProperty(cellData.getValue().getSource().getDisplayName()));
         sourceColumn.setCellFactory(col -> new SourceCell());
 
         // Access level column
         accessColumn.setCellValueFactory(cellData ->
-            new SimpleStringProperty(cellData.getValue().getAccessLevel().name()));
+                new SimpleStringProperty(cellData.getValue().getAccessLevel().name()));
         accessColumn.setCellFactory(col -> new AccessLevelCell());
 
         // Citations column
@@ -155,6 +157,7 @@ public class ResultsController {
      * Set search results.
      */
     public void setResults(List<SearchResult> newResults) {
+        refreshBookmarkCache();
         results.setAll(newResults);
         applyFiltersAndSort();
     }
@@ -195,9 +198,61 @@ public class ResultsController {
         filteredResults.setAll(filtered);
     }
 
-    /**
-     * Check if result matches current type filter.
-     */
+    // ----------------------------
+    // Bookmark helpers
+    // ----------------------------
+
+    private void refreshBookmarkCache() {
+        bookmarkedResultIds.clear();
+        try {
+            List<Bookmark> bookmarks = bookmarkRepository.findAll();
+            for (Bookmark b : bookmarks) {
+                if (b.getResultId() != null) {
+                    bookmarkedResultIds.add(b.getResultId());
+                }
+            }
+            logger.info("Loaded {} bookmarks", bookmarks.size());
+        } catch (Exception e) {
+            logger.error("Failed to load bookmarks", e);
+        }
+    }
+
+    private boolean isBookmarked(SearchResult result) {
+        return result != null && result.getId() != null && bookmarkedResultIds.contains(result.getId());
+    }
+
+    private void toggleBookmark(SearchResult result) {
+        if (result == null || result.getId() == null) return;
+
+        try {
+            if (isBookmarked(result)) {
+                bookmarkRepository.deleteByResultId(result.getId());
+                bookmarkedResultIds.remove(result.getId());
+                logger.info("Bookmark removed: result_id={} title={}", result.getId(), result.getTitle());
+                if (mainController != null) mainController.setStatus("Removed bookmark");
+            } else {
+                Bookmark bookmark = new Bookmark();
+                bookmark.setResultId(result.getId());
+                bookmark.setTitle(result.getTitle());
+                bookmark.setUrl(result.getUrl());
+                bookmarkRepository.save(bookmark);
+
+                bookmarkedResultIds.add(result.getId());
+                logger.info("Bookmark added: result_id={} title={}", result.getId(), result.getTitle());
+                if (mainController != null) mainController.setStatus("Added bookmark");
+            }
+        } catch (Exception e) {
+            logger.error("Failed to toggle bookmark", e);
+            if (mainController != null) mainController.setStatus("Bookmark failed");
+        }
+
+        Platform.runLater(() -> resultsTable.refresh());
+    }
+
+    // ----------------------------
+    // Filtering helpers (your existing logic)
+    // ----------------------------
+
     private boolean matchesTypeFilter(SearchResult result) {
         if ("All Types".equals(currentTypeFilter)) {
             return true;
@@ -209,50 +264,42 @@ public class ResultsController {
 
         String filter = currentTypeFilter.toLowerCase();
 
-        switch (filter) {
-            case "article":
-                return matchesArticle(paper);
-            case "conference":
-                return matchesConference(paper);
-            case "thesis":
-                return matchesThesis(paper);
-            case "book":
-                return matchesBook(paper);
-            default:
-                return true;
-        }
+        return switch (filter) {
+            case "article" -> matchesArticle(paper);
+            case "conference" -> matchesConference(paper);
+            case "thesis" -> matchesThesis(paper);
+            case "book" -> matchesBook(paper);
+            default -> true;
+        };
     }
 
     private boolean matchesArticle(AcademicPaper paper) {
         String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
         String journal = (paper.getJournal() != null ? paper.getJournal() : "").toLowerCase();
-        return journal.contains("journal") || journal.contains("transactions") ||
-               venue.contains("journal") || venue.contains("article") || venue.contains("letter");
+        return journal.contains("journal") || journal.contains("transactions")
+                || venue.contains("journal") || venue.contains("article") || venue.contains("letter");
     }
 
     private boolean matchesConference(AcademicPaper paper) {
         String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
-        return venue.contains("conference") || venue.contains("proceedings") ||
-               venue.contains("symposium") || venue.contains("workshop");
+        return venue.contains("conference") || venue.contains("proceedings")
+                || venue.contains("symposium") || venue.contains("workshop");
     }
 
     private boolean matchesThesis(AcademicPaper paper) {
         String title = (paper.getTitle() != null ? paper.getTitle() : "").toLowerCase();
         String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
-        return title.contains("thesis") || title.contains("dissertation") ||
-               venue.contains("thesis") || venue.contains("dissertation");
+        return title.contains("thesis") || title.contains("dissertation")
+                || venue.contains("thesis") || venue.contains("dissertation");
     }
 
     private boolean matchesBook(AcademicPaper paper) {
         String venue = (paper.getVenue() != null ? paper.getVenue() : "").toLowerCase();
         String journal = (paper.getJournal() != null ? paper.getJournal() : "").toLowerCase();
-        return venue.contains("book") || journal.contains("book") ||
-               venue.contains("chapter") || venue.contains("textbook");
+        return venue.contains("book") || journal.contains("book")
+                || venue.contains("chapter") || venue.contains("textbook");
     }
 
-    /**
-     * Get comparator for current sort mode.
-     */
     private Comparator<SearchResult> getComparator() {
         if ("Citation Count".equals(currentSortMode)) {
             return Comparator.comparingInt((SearchResult r) -> {
@@ -269,18 +316,17 @@ public class ResultsController {
         } else if ("Title".equals(currentSortMode)) {
             return Comparator.comparing(SearchResult::getTitle);
         } else {
-            // Default: sort by relevance
             return Comparator.comparingDouble(SearchResult::getRelevance).reversed();
         }
     }
 
     /**
-     * Bookmark selected results.
+     * Bookmark selected results (unchanged)
      */
     public void bookmarkSelected() {
         List<SearchResult> selected = resultsTable.getSelectionModel().getSelectedItems();
         if (selected.isEmpty()) {
-            mainController.setStatus("No results selected");
+            if (mainController != null) mainController.setStatus("No results selected");
             return;
         }
 
@@ -300,7 +346,8 @@ public class ResultsController {
             }
         }
 
-        mainController.setStatus("Bookmarked " + bookmarked + " result(s)");
+        if (mainController != null) mainController.setStatus("Bookmarked " + bookmarked + " result(s)");
+        Platform.runLater(() -> resultsTable.refresh());
     }
 
     /**
@@ -310,7 +357,10 @@ public class ResultsController {
         this.mainController = mainController;
     }
 
+    // ----------------------------
     // Context menu actions
+    // ----------------------------
+
     @FXML
     private void onOpenUrl() {
         SearchResult selected = resultsTable.getSelectionModel().getSelectedItem();
@@ -327,42 +377,26 @@ public class ResultsController {
             String downloadDir = homeDir + "/Downloads/LibSearch";
 
             String downloadId = downloadService.queueDownload(
-                selected.getId(),
-                paper.getPdfUrl(),
-                downloadDir
+                    selected.getId(),
+                    paper.getPdfUrl(),
+                    downloadDir
             );
 
             if (downloadId != null) {
-                mainController.setStatus("Download queued: " + paper.getTitle());
+                if (mainController != null) mainController.setStatus("Download queued: " + paper.getTitle());
                 logger.info("Queued PDF download: {}", paper.getPdfUrl());
             } else {
-                mainController.setStatus("Failed to queue download");
+                if (mainController != null) mainController.setStatus("Failed to queue download");
             }
         } else {
-            mainController.setStatus("No PDF available");
+            if (mainController != null) mainController.setStatus("No PDF available");
         }
     }
 
     @FXML
     private void onBookmark() {
         SearchResult selected = resultsTable.getSelectionModel().getSelectedItem();
-        if (selected != null) {
-            try {
-                if (bookmarkRepository.exists(selected.getId())) {
-                    mainController.setStatus("Already bookmarked");
-                } else {
-                    Bookmark bookmark = new Bookmark();
-                    bookmark.setResultId(selected.getId());
-                    bookmark.setTitle(selected.getTitle());
-                    bookmark.setUrl(selected.getUrl());
-                    bookmarkRepository.save(bookmark);
-                    mainController.setStatus("Added to bookmarks");
-                }
-            } catch (Exception e) {
-                logger.error("Failed to bookmark", e);
-                mainController.setStatus("Failed to bookmark");
-            }
-        }
+        toggleBookmark(selected);
     }
 
     @FXML
@@ -374,9 +408,9 @@ public class ResultsController {
     }
 
     private void showExportDialog(SearchResult result) {
-        javafx.scene.control.ChoiceDialog<ExportFormat> dialog =
-            new javafx.scene.control.ChoiceDialog<>(ExportFormat.BIBTEX,
-                ExportFormat.BIBTEX, ExportFormat.RIS, ExportFormat.ENDNOTE);
+        ChoiceDialog<ExportFormat> dialog =
+                new ChoiceDialog<>(ExportFormat.BIBTEX,
+                        ExportFormat.BIBTEX, ExportFormat.RIS, ExportFormat.ENDNOTE);
 
         dialog.setTitle("Export Citation");
         dialog.setHeaderText("Choose export format");
@@ -406,13 +440,13 @@ public class ResultsController {
                         ClipboardContent content = new ClipboardContent();
                         content.putString(citation);
                         Clipboard.getSystemClipboard().setContent(content);
-                        mainController.setStatus("Citation copied to clipboard");
+                        if (mainController != null) mainController.setStatus("Citation copied to clipboard");
                     }
                 });
 
             } catch (Exception e) {
                 logger.error("Failed to export citation", e);
-                mainController.setStatus("Failed to export citation");
+                if (mainController != null) mainController.setStatus("Failed to export citation");
             }
         });
     }
@@ -432,9 +466,9 @@ public class ResultsController {
             ClipboardContent content = new ClipboardContent();
             content.putString(paper.getDoi());
             Clipboard.getSystemClipboard().setContent(content);
-            mainController.setStatus("Copied DOI to clipboard");
+            if (mainController != null) mainController.setStatus("Copied DOI to clipboard");
         } else {
-            mainController.setStatus("No DOI available");
+            if (mainController != null) mainController.setStatus("No DOI available");
         }
     }
 
@@ -443,16 +477,16 @@ public class ResultsController {
      */
     private void openUrl(SearchResult result) {
         if (result.getUrl() == null) {
-            mainController.setStatus("No URL available");
+            if (mainController != null) mainController.setStatus("No URL available");
             return;
         }
 
         try {
             Desktop.getDesktop().browse(new URI(result.getUrl()));
-            mainController.setStatus("Opened: " + result.getUrl());
+            if (mainController != null) mainController.setStatus("Opened: " + result.getUrl());
         } catch (Exception e) {
             logger.error("Failed to open URL", e);
-            mainController.setStatus("Failed to open URL");
+            if (mainController != null) mainController.setStatus("Failed to open URL");
         }
     }
 
@@ -468,18 +502,10 @@ public class ResultsController {
         content.append("Authors: ").append(result.getAuthors()).append("\n\n");
 
         if (result instanceof AcademicPaper paper) {
-            if (paper.getDoi() != null) {
-                content.append("DOI: ").append(paper.getDoi()).append("\n");
-            }
-            if (paper.getArxivId() != null) {
-                content.append("arXiv ID: ").append(paper.getArxivId()).append("\n");
-            }
-            if (paper.getPublicationDate() != null) {
-                content.append("Publication Date: ").append(paper.getPublicationDate()).append("\n");
-            }
-            if (paper.getJournal() != null) {
-                content.append("Journal: ").append(paper.getJournal()).append("\n");
-            }
+            if (paper.getDoi() != null) content.append("DOI: ").append(paper.getDoi()).append("\n");
+            if (paper.getArxivId() != null) content.append("arXiv ID: ").append(paper.getArxivId()).append("\n");
+            if (paper.getPublicationDate() != null) content.append("Publication Date: ").append(paper.getPublicationDate()).append("\n");
+            if (paper.getJournal() != null) content.append("Journal: ").append(paper.getJournal()).append("\n");
             content.append("Citations: ").append(paper.getCitationCount()).append("\n");
             content.append("\nAbstract:\n").append(paper.getAbstractText() != null ? paper.getAbstractText() : "N/A");
         }
@@ -493,7 +519,9 @@ public class ResultsController {
         alert.showAndWait();
     }
 
+    // ----------------------------
     // Custom table cells
+    // ----------------------------
 
     private static class CheckBoxTableCell extends TableCell<SearchResult, CheckBox> {
         private final CheckBox checkBox = new CheckBox();
@@ -555,14 +583,22 @@ public class ResultsController {
     }
 
     private class ActionsCell extends TableCell<SearchResult, Void> {
+        private final Button bookmarkButton = new Button();
         private final Button viewButton = new Button("View");
         private final Button downloadButton = new Button("PDF");
-        private final HBox buttons = new HBox(5, viewButton, downloadButton);
+        private final HBox buttons = new HBox(5, bookmarkButton, viewButton, downloadButton);
 
         public ActionsCell() {
             buttons.setAlignment(Pos.CENTER);
+
+            bookmarkButton.getStyleClass().add("action-button");
             viewButton.getStyleClass().add("action-button");
             downloadButton.getStyleClass().add("action-button");
+
+            bookmarkButton.setOnAction(e -> {
+                SearchResult result = getTableView().getItems().get(getIndex());
+                toggleBookmark(result);
+            });
 
             viewButton.setOnAction(e -> {
                 SearchResult result = getTableView().getItems().get(getIndex());
@@ -575,9 +611,9 @@ public class ResultsController {
                     String homeDir = System.getProperty("user.home");
                     String downloadDir = homeDir + "/Downloads/LibSearch";
                     downloadService.queueDownload(result.getId(), paper.getPdfUrl(), downloadDir);
-                    mainController.setStatus("Download queued");
+                    if (mainController != null) mainController.setStatus("Download queued");
                 } else {
-                    mainController.setStatus("No PDF available");
+                    if (mainController != null) mainController.setStatus("No PDF available");
                 }
             });
         }
@@ -588,6 +624,8 @@ public class ResultsController {
             if (empty) {
                 setGraphic(null);
             } else {
+                SearchResult result = getTableView().getItems().get(getIndex());
+                bookmarkButton.setText(isBookmarked(result) ? "★" : "☆");
                 setGraphic(buttons);
             }
         }

@@ -10,6 +10,8 @@
 
     <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
         <columns>
+            <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="220" minWidth="180"/>
+
             <!-- Selection column -->
             <TableColumn fx:id="selectColumn" text="" prefWidth="40" minWidth="40" maxWidth="40"/>
 

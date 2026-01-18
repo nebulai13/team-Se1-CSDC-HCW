@@ -56,16 +56,14 @@ CREATE INDEX IF NOT EXISTS idx_results_pmid ON search_results(pmid);
 
 -- Bookmarks
 CREATE TABLE IF NOT EXISTS bookmarks (
-    id TEXT PRIMARY KEY,
-    result_id TEXT,
-    title TEXT NOT NULL,
-    url TEXT NOT NULL,
-    notes TEXT,
-    tags TEXT, -- JSON array
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (result_id) REFERENCES search_results(id)
+                                         id TEXT PRIMARY KEY,
+                                         result_id TEXT,
+                                         title TEXT NOT NULL,
+                                         url TEXT NOT NULL,
+                                         notes TEXT,
+                                         tags TEXT,
+                                         created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created_at);
 
 -- Alerts (keyword monitoring)
 CREATE TABLE IF NOT EXISTS alerts (
