@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.lang.String?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.teamse1csdchcw.ui.controller.SearchController"
+      styleClass="search-panel" spacing="10">
+
+    <padding>
+        <Insets top="10" right="15" bottom="10" left="15"/>
+    </padding>
+
+    <!-- Main search bar -->
+    <HBox spacing="10" alignment="CENTER_LEFT">
+        <TextField fx:id="searchTextField"
+                   promptText="Enter search query (e.g., 'machine learning author:Hinton year:>2020')"
+                   HBox.hgrow="ALWAYS"
+                   onAction="#onSearch"
+                   styleClass="search-field"/>
+
+        <Button fx:id="searchButton"
+                text="Search"
+                onAction="#onSearch"
+                styleClass="primary-button"
+                prefWidth="100"/>
+
+        <Button text="Advanced"
+                onAction="#onAdvancedSearch"
+                styleClass="secondary-button"
+                prefWidth="100"/>
+    </HBox>
+
+    <!-- Quick filters -->
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <Label text="Sources:"/>
+
+        <CheckBox fx:id="arxivCheckBox" text="arXiv" selected="true"/>
+        <CheckBox fx:id="pubmedCheckBox" text="PubMed" selected="true"/>
+        <CheckBox fx:id="crossrefCheckBox" text="CrossRef" selected="true"/>
+        <CheckBox fx:id="scholarCheckBox" text="Scholar" selected="true"/>
+
+        <Separator orientation="VERTICAL"/>
+
+        <Label text="Year:"/>
+        <TextField fx:id="yearFromField" promptText="From" prefWidth="70"/>
+        <Label text="-"/>
+        <TextField fx:id="yearToField" promptText="To" prefWidth="70"/>
+
+        <Separator orientation="VERTICAL"/>
+
+        <Label text="Max Results:"/>
+        <ComboBox fx:id="maxResultsComboBox" prefWidth="80">
+            <items>
+                <FXCollections fx:factory="observableArrayList">
+                    <String fx:value="10"/>
+                    <String fx:value="25"/>
+                    <String fx:value="50"/>
+                    <String fx:value="100"/>
+                </FXCollections>
+            </items>
+        </ComboBox>
+
+        <Region HBox.hgrow="ALWAYS"/>
+
+        <CheckBox fx:id="offlineModeCheckBox" text="Search Offline"/>
+    </HBox>
+
+    <!-- Search tips (collapsible) -->
+    <TitledPane fx:id="tipsPane" text="Search Tips" expanded="false" collapsible="true">
+        <VBox spacing="5">
+            <padding>
+                <Insets top="5" right="5" bottom="5" left="5"/>
+            </padding>
+
+            <Label text="Advanced Query Syntax:" styleClass="tips-title"/>
+            <Label text="• author:Smith - Filter by author" styleClass="tips-text"/>
+            <Label text="• year:>2020 or year:2020..2024 - Year ranges" styleClass="tips-text"/>
+            <Label text="• type:article - Document type filter" styleClass="tips-text"/>
+            <Label text="• site:arxiv.org - Limit to specific site" styleClass="tips-text"/>
+            <Label text="• filetype:pdf - File type filter" styleClass="tips-text"/>
+            <Label text="• &quot;machine learning&quot; - Exact phrase" styleClass="tips-text"/>
+            <Label text="• Boolean: AND, OR, NOT, +, -" styleClass="tips-text"/>
+        </VBox>
+    </TitledPane>
+
+</VBox>

@@ -1,0 +1,235 @@
+/* LibSearch - Main Stylesheet */
+
+/* Root variables */
+.root {
+    -fx-font-family: "System";
+    -fx-font-size: 13px;
+
+    /* Color scheme */
+    -fx-primary-color: #2196F3;
+    -fx-primary-dark: #1976D2;
+    -fx-accent-color: #4CAF50;
+    -fx-warning-color: #FF9800;
+    -fx-error-color: #F44336;
+
+    -fx-background-color: #FAFAFA;
+    -fx-text-fill: #212121;
+}
+
+/* Search Panel */
+.search-panel {
+    -fx-background-color: white;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 0 1 0;
+}
+
+.search-field {
+    -fx-font-size: 14px;
+    -fx-pref-height: 36px;
+}
+
+.primary-button {
+    -fx-background-color: -fx-primary-color;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-pref-height: 36px;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: -fx-primary-dark;
+}
+
+.secondary-button {
+    -fx-background-color: #EEEEEE;
+    -fx-text-fill: #424242;
+    -fx-pref-height: 36px;
+    -fx-cursor: hand;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #E0E0E0;
+}
+
+/* Tips */
+.tips-title {
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.tips-text {
+    -fx-font-size: 11px;
+    -fx-text-fill: #616161;
+}
+
+/* Sidebar */
+.sidebar {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #424242;
+}
+
+.info-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #757575;
+}
+
+.info-value {
+    -fx-font-size: 12px;
+    -fx-text-fill: #424242;
+}
+
+/* Toolbar */
+.toolbar {
+    -fx-background-color: #FAFAFA;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* Table */
+.table-view {
+    -fx-background-color: white;
+}
+
+.table-view .column-header {
+    -fx-background-color: #F5F5F5;
+    -fx-font-weight: bold;
+    -fx-text-fill: #424242;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #E3F2FD;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #F5F5F5;
+}
+
+.placeholder-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #9E9E9E;
+}
+
+.placeholder-subtext {
+    -fx-font-size: 13px;
+    -fx-text-fill: #BDBDBD;
+}
+
+/* Access level badges */
+.access-open {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 3;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.access-licensed {
+    -fx-background-color: #FF9800;
+    -fx-text-fill: white;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 3;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.access-restricted {
+    -fx-background-color: #F44336;
+    -fx-text-fill: white;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 3;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+.access-unknown {
+    -fx-background-color: #9E9E9E;
+    -fx-text-fill: white;
+    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 3;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+}
+
+/* Source badges */
+.source-badge {
+    -fx-padding: 2 6 2 6;
+    -fx-background-radius: 3;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+.source-arxiv {
+    -fx-background-color: #B23121;
+    -fx-text-fill: white;
+}
+
+.source-pubmed {
+    -fx-background-color: #006633;
+    -fx-text-fill: white;
+}
+
+.source-crossref {
+    -fx-background-color: #F68B1F;
+    -fx-text-fill: white;
+}
+
+.source-scholar {
+    -fx-background-color: #4285F4;
+    -fx-text-fill: white;
+}
+
+/* Action buttons in table */
+.action-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -fx-primary-color;
+    -fx-cursor: hand;
+    -fx-padding: 2 6 2 6;
+    -fx-font-size: 11px;
+}
+
+.action-button:hover {
+    -fx-underline: true;
+}
+
+/* Status Bar */
+.status-bar {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1 0 0 0;
+    -fx-font-size: 12px;
+}
+
+/* Progress indicator */
+.progress-indicator {
+    -fx-progress-color: -fx-primary-color;
+}
+
+/* Hyperlinks */
+.hyperlink {
+    -fx-text-fill: -fx-primary-color;
+    -fx-underline: false;
+    -fx-cursor: hand;
+}
+
+.hyperlink:hover {
+    -fx-underline: true;
+}
+
+/* Tooltips */
+.tooltip {
+    -fx-background-color: #424242;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-padding: 5 8 5 8;
+    -fx-background-radius: 4;
+}
