@@ -11,12 +11,14 @@ import com.example.teamse1csdchcw.service.search.QueryParserService;
 import com.example.teamse1csdchcw.service.index.LocalSearchService;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TitledPane;
-import javafx.scene.control.Alert;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,8 +266,110 @@ public class SearchController {
      */
     @FXML
     private void onAdvancedSearch() {
-        // TODO: Implement advanced search dialog
-        mainController.setStatus("Advanced search not yet implemented");
+        Dialog<String> dialog = new Dialog<>();
+        dialog.setTitle("Advanced Search");
+        dialog.setHeaderText("Build a complex search query");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        javafx.scene.layout.GridPane grid = new javafx.scene.layout.GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new javafx.geometry.Insets(20, 150, 10, 10));
+
+        TextField keywordsField = new TextField();
+        keywordsField.setPromptText("e.g., machine learning, neural networks");
+        keywordsField.setPrefWidth(300);
+
+        TextField authorField = new TextField();
+        authorField.setPromptText("e.g., Smith, John");
+
+        TextField titleField = new TextField();
+        titleField.setPromptText("Words in title");
+
+        TextField yearFromField = new TextField();
+        yearFromField.setPromptText("e.g., 2020");
+        yearFromField.setPrefWidth(80);
+
+        TextField yearToField = new TextField();
+        yearToField.setPromptText("e.g., 2024");
+        yearToField.setPrefWidth(80);
+
+        javafx.scene.layout.HBox yearBox = new javafx.scene.layout.HBox(10, yearFromField, new javafx.scene.control.Label("to"), yearToField);
+
+        ComboBox<String> booleanOp = new ComboBox<>();
+        booleanOp.getItems().addAll("AND", "OR");
+        booleanOp.setValue("AND");
+
+        grid.add(new javafx.scene.control.Label("Keywords:"), 0, 0);
+        grid.add(keywordsField, 1, 0);
+        grid.add(new javafx.scene.control.Label("Author:"), 0, 1);
+        grid.add(authorField, 1, 1);
+        grid.add(new javafx.scene.control.Label("Title contains:"), 0, 2);
+        grid.add(titleField, 1, 2);
+        grid.add(new javafx.scene.control.Label("Year range:"), 0, 3);
+        grid.add(yearBox, 1, 3);
+        grid.add(new javafx.scene.control.Label("Combine with:"), 0, 4);
+        grid.add(booleanOp, 1, 4);
+
+        // Add syntax help
+        javafx.scene.control.Label helpLabel = new javafx.scene.control.Label(
+                "Tip: Use quotes for exact phrases. Example: \"deep learning\"");
+        helpLabel.setStyle("-fx-text-fill: gray; -fx-font-size: 11px;");
+        grid.add(helpLabel, 0, 5, 2, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        // Convert result to search query
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == ButtonType.OK) {
+                StringBuilder query = new StringBuilder();
+                String op = " " + booleanOp.getValue() + " ";
+
+                // Keywords
+                String keywords = keywordsField.getText().trim();
+                if (!keywords.isEmpty()) {
+                    query.append(keywords);
+                }
+
+                // Author
+                String author = authorField.getText().trim();
+                if (!author.isEmpty()) {
+                    if (query.length() > 0) query.append(op);
+                    query.append("author:\"").append(author).append("\"");
+                }
+
+                // Title
+                String title = titleField.getText().trim();
+                if (!title.isEmpty()) {
+                    if (query.length() > 0) query.append(op);
+                    query.append("title:\"").append(title).append("\"");
+                }
+
+                // Year range
+                String yearFrom = yearFromField.getText().trim();
+                String yearTo = yearToField.getText().trim();
+                if (!yearFrom.isEmpty() || !yearTo.isEmpty()) {
+                    if (query.length() > 0) query.append(" ");
+                    if (!yearFrom.isEmpty() && !yearTo.isEmpty()) {
+                        query.append("year:").append(yearFrom).append("-").append(yearTo);
+                    } else if (!yearFrom.isEmpty()) {
+                        query.append("year:").append(yearFrom);
+                    } else {
+                        query.append("year:").append(yearTo);
+                    }
+                }
+
+                return query.toString();
+            }
+            return null;
+        });
+
+        dialog.showAndWait().ifPresent(query -> {
+            if (!query.isEmpty()) {
+                searchTextField.setText(query);
+                mainController.setStatus("Advanced search query built");
+            }
+        });
     }
 
     /**
@@ -273,6 +377,20 @@ public class SearchController {
      */
     public void focusSearchField() {
         searchTextField.requestFocus();
+    }
+
+    /**
+     * Set search query text.
+     */
+    public void setSearchQuery(String query) {
+        searchTextField.setText(query);
+    }
+
+    /**
+     * Execute the current search programmatically.
+     */
+    public void executeSearch() {
+        onSearch();
     }
 
     /**

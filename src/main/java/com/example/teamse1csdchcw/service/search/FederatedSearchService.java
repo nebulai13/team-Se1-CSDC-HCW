@@ -1,18 +1,25 @@
 package com.example.teamse1csdchcw.service.search;
 
+// -- domain models --
 import com.example.teamse1csdchcw.domain.search.SearchQuery;
 import com.example.teamse1csdchcw.domain.search.SearchResult;
 import com.example.teamse1csdchcw.domain.source.SourceType;
+// -- custom exception for search failures --
 import com.example.teamse1csdchcw.exception.SearchException;
+// -- connector layer: factory & interface --
 import com.example.teamse1csdchcw.service.connector.ConnectorFactory;
 import com.example.teamse1csdchcw.service.connector.SourceConnector;
+// -- lucene index service for auto-indexing results --
 import com.example.teamse1csdchcw.service.index.IndexService;
+// -- rate limiter to avoid api throttling --
 import com.example.teamse1csdchcw.util.http.RateLimiter;
+// -- logging --
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+// -- java concurrent utils for parallel execution --
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -20,29 +27,42 @@ import java.util.stream.Collectors;
  * Orchestrates federated search across multiple sources.
  * Executes searches in parallel with timeout and rate limiting.
  */
+// -- core service: searches multiple apis in parallel --
+// -- "federated" = distributed across multiple sources --
+// -- uses thread pool for concurrent api calls --
 public class FederatedSearchService {
+    // -- logger instance for this class --
     private static final Logger logger = LoggerFactory.getLogger(FederatedSearchService.class);
-    private static final int DEFAULT_MAX_RESULTS = 50;
-    private static final int DEFAULT_TIMEOUT_SECONDS = 30;
-    private static final int DEFAULT_MAX_CONCURRENT = 5;
+    // -- config defaults --
+    private static final int DEFAULT_MAX_RESULTS = 50;       // -- results per source --
+    private static final int DEFAULT_TIMEOUT_SECONDS = 30;   // -- total search timeout --
+    private static final int DEFAULT_MAX_CONCURRENT = 5;     // -- thread pool size --
 
-    private final ConnectorFactory connectorFactory;
-    private final ResultAggregator resultAggregator;
-    private final RateLimiter rateLimiter;
-    private final ExecutorService executorService;
-    private IndexService indexService;
+    // -- dependencies (injected via constructor or direct instantiation) --
+    private final ConnectorFactory connectorFactory;  // -- creates api connectors --
+    private final ResultAggregator resultAggregator;  // -- merges & dedupes results --
+    private final RateLimiter rateLimiter;            // -- prevents api throttling --
+    private final ExecutorService executorService;    // -- thread pool for parallel calls --
+    private IndexService indexService;                // -- lucene index for caching --
 
+    // -- configurable settings --
     private int maxResultsPerSource = DEFAULT_MAX_RESULTS;
     private int timeoutSeconds = DEFAULT_TIMEOUT_SECONDS;
     private int maxConcurrentSources = DEFAULT_MAX_CONCURRENT;
-    private boolean autoIndexEnabled = true;
+    private boolean autoIndexEnabled = true;  // -- auto-save results to lucene --
 
+    // -- default constructor: creates all dependencies --
     public FederatedSearchService() {
+        // -- singleton factory for connectors --
         this.connectorFactory = ConnectorFactory.getInstance();
+        // -- merges results from multiple sources --
         this.resultAggregator = new ResultAggregator();
+        // -- singleton rate limiter --
         this.rateLimiter = RateLimiter.getInstance();
+        // -- fixed thread pool: reuses threads for efficiency --
         this.executorService = Executors.newFixedThreadPool(DEFAULT_MAX_CONCURRENT);
 
+        // -- try to init lucene index for auto-indexing --
         try {
             this.indexService = new IndexService();
         } catch (IOException e) {
@@ -81,14 +101,18 @@ public class FederatedSearchService {
      * @return aggregated search results
      * @throws SearchException if search fails
      */
+    // -- main search method: searches specified sources in parallel --
+    // -- uses CompletableFuture for async execution --
     public List<SearchResult> search(SearchQuery query, Set<SourceType> sourceTypes) throws SearchException {
         logger.info("Starting federated search across {} sources: {}",
                 sourceTypes.size(), sourceTypes);
 
+        // -- track total search time --
         long startTime = System.currentTimeMillis();
 
         try {
             // Get connectors for requested sources
+            // -- connector = api client for one source --
             List<SourceConnector> connectors = connectorFactory.getConnectors(sourceTypes);
 
             if (connectors.isEmpty()) {
@@ -96,40 +120,47 @@ public class FederatedSearchService {
             }
 
             // Execute searches in parallel
+            // -- CompletableFuture: java 8+ async programming --
+            // -- each future represents a pending api call --
             List<CompletableFuture<SearchSourceResult>> futures = new ArrayList<>();
 
             for (SourceConnector connector : connectors) {
+                // -- supplyAsync: run task in thread pool, return future --
                 CompletableFuture<SearchSourceResult> future = CompletableFuture.supplyAsync(
-                        () -> searchSource(connector, query),
-                        executorService
+                        () -> searchSource(connector, query),  // -- lambda: task to run --
+                        executorService                        // -- thread pool to use --
                 );
                 futures.add(future);
             }
 
             // Wait for all searches to complete with timeout
+            // -- allOf: completes when all futures complete --
             CompletableFuture<Void> allOf = CompletableFuture.allOf(
-                    futures.toArray(new CompletableFuture[0])
+                    futures.toArray(new CompletableFuture[0])  // -- varargs from list --
             );
 
             try {
+                // -- block until all complete or timeout --
                 allOf.get(timeoutSeconds, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 logger.warn("Search timeout after {} seconds, using partial results", timeoutSeconds);
                 // Cancel remaining tasks
+                // -- cancel slow sources, use results we have --
                 futures.forEach(f -> f.cancel(true));
             }
 
             // Collect results
+            // -- stream pipeline: filter done futures, extract results --
             List<SearchSourceResult> sourceResults = futures.stream()
                     .filter(f -> f.isDone() && !f.isCompletedExceptionally() && !f.isCancelled())
                     .map(f -> {
                         try {
-                            return f.get();
+                            return f.get();  // -- blocking get (but future is done) --
                         } catch (Exception e) {
                             return null;
                         }
                     })
-                    .filter(Objects::nonNull)
+                    .filter(Objects::nonNull)  // -- remove nulls --
                     .collect(Collectors.toList());
 
             // Log results per source

@@ -7,17 +7,22 @@ setlocal enabledelayedexpansion
 REM Get script directory
 set SCRIPT_DIR=%~dp0
 
-REM JAR file location
-set JAR_FILE=%SCRIPT_DIR%target\team-Se1-CSDC-HCW-1.0-SNAPSHOT.jar
+REM JAR file location (Gradle builds to build/libs/)
+set JAR_FILE=%SCRIPT_DIR%build\libs\team-Se1-CSDC-HCW-1.0-SNAPSHOT-all.jar
 
-REM Check if JAR exists
+REM Check if JAR exists, if not build it
 if not exist "%JAR_FILE%" (
-    echo Error: LibSearch JAR file not found at:
-    echo %JAR_FILE%
-    echo.
-    echo Please build the project first:
-    echo   mvn clean install
-    exit /b 1
+    echo LibSearch JAR not found. Building...
+    call "%SCRIPT_DIR%gradlew.bat" shadowJar
+    if not exist "%JAR_FILE%" (
+        echo Error: Build failed. JAR file not found at:
+        echo %JAR_FILE%
+        echo.
+        echo Please build the project manually:
+        echo   gradlew shadowJar
+        exit /b 1
+    )
+    echo Build successful!
 )
 
 REM Check Java version
@@ -32,13 +37,9 @@ if errorlevel 1 (
 REM Run LibSearch
 if "%~1"=="" (
     echo Starting LibSearch GUI...
-    if defined JAVAFX_HOME (
-        java --module-path "%JAVAFX_HOME%\lib" --add-modules javafx.controls,javafx.fxml -jar "%JAR_FILE%"
-    ) else (
-        java -jar "%JAR_FILE%"
-    )
+    java -jar "%JAR_FILE%"
 ) else (
-    REM CLI mode
+    REM CLI mode with arguments
     java -jar "%JAR_FILE%" %*
 )
 

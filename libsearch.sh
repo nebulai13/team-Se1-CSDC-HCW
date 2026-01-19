@@ -11,17 +11,34 @@ NC='\033[0m' # No Color
 # Script directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# JAR file location
-JAR_FILE="$SCRIPT_DIR/target/team-Se1-CSDC-HCW-1.0-SNAPSHOT.jar"
+# JAR file location (Gradle builds to build/libs/)
+JAR_FILE="$SCRIPT_DIR/build/libs/team-Se1-CSDC-HCW-1.0-SNAPSHOT-all.jar"
 
 # Check if JAR exists
 if [ ! -f "$JAR_FILE" ]; then
-    echo -e "${RED}Error: LibSearch JAR file not found at:${NC}"
-    echo "$JAR_FILE"
-    echo ""
-    echo "Please build the project first:"
-    echo "  mvn clean install"
-    exit 1
+    echo -e "${YELLOW}LibSearch JAR not found. Building...${NC}"
+
+    # Use gradlew.mac on macOS, gradlew on Linux
+    if [[ "$OSTYPE" == "darwin"* ]] && [ -f "$SCRIPT_DIR/gradlew.mac" ]; then
+        GRADLE_CMD="$SCRIPT_DIR/gradlew.mac"
+        # gradlew.mac runs 'gradlew run' by default, we need shadowJar instead
+        chmod +x "$SCRIPT_DIR/gradlew"
+        export JAVA_HOME="${JAVA_HOME:-/opt/homebrew/Cellar/openjdk@21/21.0.9/libexec/openjdk.jdk/Contents/Home}"
+        "$SCRIPT_DIR/gradlew" shadowJar
+    else
+        chmod +x "$SCRIPT_DIR/gradlew"
+        "$SCRIPT_DIR/gradlew" shadowJar
+    fi
+
+    if [ ! -f "$JAR_FILE" ]; then
+        echo -e "${RED}Error: Build failed. JAR file not found at:${NC}"
+        echo "$JAR_FILE"
+        echo ""
+        echo "Please build the project manually:"
+        echo "  ./gradlew shadowJar"
+        exit 1
+    fi
+    echo -e "${GREEN}Build successful!${NC}"
 fi
 
 # Check Java version
@@ -41,14 +58,12 @@ if [ "$JAVA_VERSION" -lt 21 ]; then
     echo ""
 fi
 
-# Check for JavaFX (if running GUI mode)
+# Run LibSearch
 if [ $# -eq 0 ]; then
     echo -e "${GREEN}Starting LibSearch GUI...${NC}"
-    java --module-path "$JAVAFX_HOME/lib" \
-         --add-modules javafx.controls,javafx.fxml \
-         -jar "$JAR_FILE"
+    java -jar "$JAR_FILE"
 else
-    # CLI mode - no JavaFX needed
+    # CLI mode with arguments
     java -jar "$JAR_FILE" "$@"
 fi
 

@@ -37,7 +37,6 @@ public class ResultsController {
 
     // FXML injected components
     @FXML private TableView<SearchResult> resultsTable;
-    @FXML private TableColumn<SearchResult, CheckBox> selectColumn;
     @FXML private TableColumn<SearchResult, String> titleColumn;
     @FXML private TableColumn<SearchResult, String> authorsColumn;
     @FXML private TableColumn<SearchResult, String> yearColumn;
@@ -46,6 +45,9 @@ public class ResultsController {
     @FXML private TableColumn<SearchResult, Integer> citationsColumn;
     @FXML private TableColumn<SearchResult, Void> actionsColumn;
     @FXML private ContextMenu rowContextMenu;
+
+    // Track selected results
+    private final Set<String> selectedResultIds = new HashSet<>();
 
     // Data
     private final ObservableList<SearchResult> results = FXCollections.observableArrayList();
@@ -102,8 +104,6 @@ public class ResultsController {
      * Set up table columns with cell value factories and custom cells.
      */
     private void setupColumns() {
-        // Selection column
-        selectColumn.setCellFactory(col -> new CheckBoxTableCell());
 
         // Title column
         titleColumn.setCellValueFactory(cellData ->
@@ -171,6 +171,20 @@ public class ResultsController {
     }
 
     /**
+     * Get all results.
+     */
+    public ObservableList<SearchResult> getResults() {
+        return filteredResults;
+    }
+
+    /**
+     * Get the results table for external refresh.
+     */
+    public TableView<SearchResult> getResultsTable() {
+        return resultsTable;
+    }
+
+    /**
      * Set sort mode.
      */
     public void setSortMode(String sortMode) {
@@ -202,7 +216,7 @@ public class ResultsController {
     // Bookmark helpers
     // ----------------------------
 
-    private void refreshBookmarkCache() {
+    public void refreshBookmarkCache() {
         bookmarkedResultIds.clear();
         try {
             List<Bookmark> bookmarks = bookmarkRepository.findAll();
@@ -229,7 +243,8 @@ public class ResultsController {
                 bookmarkRepository.deleteByResultId(result.getId());
                 bookmarkedResultIds.remove(result.getId());
                 logger.info("Bookmark removed: result_id={} title={}", result.getId(), result.getTitle());
-                if (mainController != null) mainController.setStatus("Removed bookmark");
+                if (mainController != null) mainController.setStatus("Removed bookmark: " + truncateTitle(result.getTitle()));
+                showBookmarkNotification(false, result.getTitle());
             } else {
                 Bookmark bookmark = new Bookmark();
                 bookmark.setResultId(result.getId());
@@ -239,14 +254,49 @@ public class ResultsController {
 
                 bookmarkedResultIds.add(result.getId());
                 logger.info("Bookmark added: result_id={} title={}", result.getId(), result.getTitle());
-                if (mainController != null) mainController.setStatus("Added bookmark");
+                if (mainController != null) mainController.setStatus("Bookmarked: " + truncateTitle(result.getTitle()));
+                showBookmarkNotification(true, result.getTitle());
             }
         } catch (Exception e) {
             logger.error("Failed to toggle bookmark", e);
             if (mainController != null) mainController.setStatus("Bookmark failed");
+            showError("Bookmark Error", "Failed to update bookmark: " + e.getMessage());
         }
 
         Platform.runLater(() -> resultsTable.refresh());
+    }
+
+    private String truncateTitle(String title) {
+        if (title == null) return "";
+        return title.length() > 40 ? title.substring(0, 37) + "..." : title;
+    }
+
+    private void showBookmarkNotification(boolean added, String title) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle(added ? "Bookmark Added" : "Bookmark Removed");
+            alert.setHeaderText(null);
+            alert.setContentText(added ?
+                    "Added to bookmarks:\n" + truncateTitle(title) :
+                    "Removed from bookmarks:\n" + truncateTitle(title));
+
+            // Auto-close after 1.5 seconds
+            javafx.animation.PauseTransition delay = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(1.5));
+            delay.setOnFinished(e -> alert.close());
+            delay.play();
+
+            alert.show();
+        });
+    }
+
+    private void showError(String title, String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle(title);
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 
     // ----------------------------
@@ -523,19 +573,6 @@ public class ResultsController {
     // Custom table cells
     // ----------------------------
 
-    private static class CheckBoxTableCell extends TableCell<SearchResult, CheckBox> {
-        private final CheckBox checkBox = new CheckBox();
-
-        @Override
-        protected void updateItem(CheckBox item, boolean empty) {
-            super.updateItem(item, empty);
-            if (empty) {
-                setGraphic(null);
-            } else {
-                setGraphic(checkBox);
-            }
-        }
-    }
 
     private static class TitleCell extends TableCell<SearchResult, String> {
         @Override
@@ -583,10 +620,11 @@ public class ResultsController {
     }
 
     private class ActionsCell extends TableCell<SearchResult, Void> {
+        private final CheckBox selectCheckBox = new CheckBox();
         private final Button bookmarkButton = new Button();
         private final Button viewButton = new Button("View");
         private final Button downloadButton = new Button("PDF");
-        private final HBox buttons = new HBox(5, bookmarkButton, viewButton, downloadButton);
+        private final HBox buttons = new HBox(5, selectCheckBox, bookmarkButton, viewButton, downloadButton);
 
         public ActionsCell() {
             buttons.setAlignment(Pos.CENTER);
@@ -594,6 +632,15 @@ public class ResultsController {
             bookmarkButton.getStyleClass().add("action-button");
             viewButton.getStyleClass().add("action-button");
             downloadButton.getStyleClass().add("action-button");
+
+            selectCheckBox.setOnAction(e -> {
+                SearchResult result = getTableView().getItems().get(getIndex());
+                if (selectCheckBox.isSelected()) {
+                    selectedResultIds.add(result.getId());
+                } else {
+                    selectedResultIds.remove(result.getId());
+                }
+            });
 
             bookmarkButton.setOnAction(e -> {
                 SearchResult result = getTableView().getItems().get(getIndex());
@@ -625,6 +672,7 @@ public class ResultsController {
                 setGraphic(null);
             } else {
                 SearchResult result = getTableView().getItems().get(getIndex());
+                selectCheckBox.setSelected(selectedResultIds.contains(result.getId()));
                 bookmarkButton.setText(isBookmarked(result) ? "★" : "☆");
                 setGraphic(buttons);
             }
