@@ -160,6 +160,10 @@ public class HelloApplication extends Application {
         } catch (Exception e) {
             logger.error("Error closing resources", e);
         }
+
+        // Force JVM exit - needed because thread pools (e.g., DownloadService)
+        // use non-daemon threads that would otherwise keep the JVM alive
+        System.exit(0);
     }
 
     // -- alt entry point: normally Launcher.main() is used instead --

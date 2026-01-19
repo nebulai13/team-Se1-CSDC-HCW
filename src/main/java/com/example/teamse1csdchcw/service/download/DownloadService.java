@@ -85,7 +85,7 @@ public class DownloadService {
                 downloadFile(download, progressCallback);
 
                 download.setStatus(DownloadStatus.COMPLETED);
-                download.setProgress(100.0);
+                download.setProgress(1.0);
                 download.setCompletedAt(LocalDateTime.now());
                 repository.save(download);
 
@@ -116,11 +116,18 @@ public class DownloadService {
     private void downloadFile(Download download, Consumer<Double> progressCallback) throws IOException, SQLException {
         Request request = new Request.Builder()
                 .url(download.getUrl())
+                .header("User-Agent", "LibSearch/1.0 (Academic Search Tool)")
                 .build();
 
         try (Response response = httpClient.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 throw new IOException("Download failed: HTTP " + response.code());
+            }
+
+            // verify response is actually a PDF, not an HTML landing page
+            String contentType = response.header("Content-Type", "");
+            if (contentType.contains("text/html")) {
+                throw new IOException("URL resolved to HTML page, not a PDF. The publisher may not provide direct PDF access.");
             }
 
             long contentLength = response.body().contentLength();
@@ -138,7 +145,7 @@ public class DownloadService {
                     totalBytesRead += bytesRead;
 
                     if (contentLength > 0) {
-                        double progress = (totalBytesRead * 100.0) / contentLength;
+                        double progress = (double) totalBytesRead / contentLength;
                         download.setProgress(progress);
 
                         if (progressCallback != null) {
@@ -236,11 +243,12 @@ public class DownloadService {
             filename = filename.substring(0, queryIndex);
         }
 
-        if (!filename.contains(".")) {
+        filename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
+
+        // ensure .pdf extension
+        if (!filename.toLowerCase().endsWith(".pdf")) {
             filename = filename + ".pdf";
         }
-
-        filename = filename.replaceAll("[^a-zA-Z0-9._-]", "_");
 
         return filename;
     }

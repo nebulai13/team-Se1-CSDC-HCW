@@ -252,8 +252,9 @@ public class DownloadRepository {
         download.setStatus(Download.DownloadStatus.valueOf(rs.getString("status")));
         download.setProgress(rs.getDouble("progress"));
 
-        // handle nullable Long - use getObject instead of getLong
-        Long fileSize = rs.getObject("file_size", Long.class);
+        // handle nullable Long - getLong returns 0 for NULL, use wasNull() to detect
+        long fileSizeValue = rs.getLong("file_size");
+        Long fileSize = rs.wasNull() ? null : fileSizeValue;
         download.setFileSize(fileSize);
 
         // convert sql Timestamp back to LocalDateTime - null-safe
