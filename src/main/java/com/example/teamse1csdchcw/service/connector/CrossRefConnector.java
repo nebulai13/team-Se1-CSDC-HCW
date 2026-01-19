@@ -5,6 +5,7 @@ import com.example.teamse1csdchcw.domain.search.SearchQuery;
 import com.example.teamse1csdchcw.domain.search.SearchResult;
 import com.example.teamse1csdchcw.domain.source.SourceType;
 import com.example.teamse1csdchcw.exception.ConnectorException;
+import com.example.teamse1csdchcw.service.resolver.PdfUrlResolver;
 import com.example.teamse1csdchcw.util.http.HttpClientFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,6 +37,7 @@ public class CrossRefConnector implements SourceConnector {
     private static final Logger logger = LoggerFactory.getLogger(CrossRefConnector.class);
     private static final String API_URL = "https://api.crossref.org/works";
     private static final String USER_AGENT = "LibSearch/1.0 (https://github.com/libsearch; mailto:support@example.com)";
+    private final PdfUrlResolver pdfResolver;
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -43,6 +45,7 @@ public class CrossRefConnector implements SourceConnector {
     public CrossRefConnector() {
         this.httpClient = HttpClientFactory.getDefaultClient();
         this.objectMapper = new ObjectMapper();
+        this.pdfResolver = new PdfUrlResolver(httpClient);
     }
 
     @Override
@@ -148,13 +151,17 @@ public class CrossRefConnector implements SourceConnector {
                 if (doiNode != null) {
                     String doi = doiNode.asText();
                     paper.setDoi(doi);
-                    paper.setUrl("https://doi.org/" + doi);
-                    // Try to construct PDF URL
-                    paper.setPdfUrl("https://doi.org/" + doi);
+
+                    String doiUrl = "https://doi.org/" + doi;
+                    paper.setUrl(doiUrl);
+
+                    // Store DOI URL directly - will be resolved on-demand during download
+                    paper.setPdfUrl(doiUrl);
                 }
 
                 // Extract title
                 JsonNode titleNode = item.get("title");
+                // Extracts title from CrossRef JSON response
                 if (titleNode != null && titleNode.isArray() && titleNode.size() > 0) {
                     paper.setTitle(titleNode.get(0).asText());
                 }
@@ -308,15 +315,16 @@ public class CrossRefConnector implements SourceConnector {
             Request request = new Request.Builder()
                     .url("https://api.crossref.org/works?rows=1")
                     .header("User-Agent", USER_AGENT)
-                    .head()
+                    .get()  // Use GET instead of HEAD for more reliable check
                     .build();
 
             try (Response response = httpClient.newCall(request).execute()) {
                 return response.isSuccessful();
             }
         } catch (Exception e) {
-            logger.warn("CrossRef availability check failed", e);
-            return false;
+            logger.debug("CrossRef availability check failed: {}", e.getMessage());
+            // Return true by default - assume available unless proven otherwise
+            return true;
         }
     }
 }

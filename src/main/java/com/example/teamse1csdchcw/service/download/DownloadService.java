@@ -1,5 +1,6 @@
 package com.example.teamse1csdchcw.service.download;
-
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import com.example.teamse1csdchcw.repository.DownloadRepository;
 import com.example.teamse1csdchcw.repository.DownloadRepository.Download;
 import com.example.teamse1csdchcw.repository.DownloadRepository.Download.DownloadStatus;
@@ -40,6 +41,26 @@ public class DownloadService {
     }
 
     public String queueDownload(String resultId, String url, String destinationDir) {
+        // Add this check at the very start
+        if (url != null && url.startsWith("UNRESOLVED:")) {
+            String failedUrl = url.substring("UNRESOLVED:".length());
+            logger.warn("Cannot download - link not resolved: {}", failedUrl);
+
+            // Show error to user (you'll need to add javafx.scene.control.Alert import)
+            javafx.application.Platform.runLater(() -> {
+                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.WARNING);
+                alert.setTitle("Download Failed");
+                alert.setHeaderText("Link Not Resolved");
+                alert.setContentText(
+                        "Could not resolve DOI to a downloadable PDF:\n" +
+                                failedUrl + "\n\n" +
+                                "The paper may be behind a paywall or require institutional access."
+                );
+                alert.showAndWait();
+            });
+            return null;
+        }
+
         try {
             String filename = extractFilename(url);
             Path destPath = Paths.get(destinationDir, filename);

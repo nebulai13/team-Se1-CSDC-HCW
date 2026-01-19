@@ -7,6 +7,7 @@ import com.example.teamse1csdchcw.domain.user.Bookmark;
 import com.example.teamse1csdchcw.repository.BookmarkRepository;
 import com.example.teamse1csdchcw.service.download.DownloadService;
 import com.example.teamse1csdchcw.service.export.CitationExportService;
+import com.example.teamse1csdchcw.service.resolver.PdfUrlResolver;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  */
 public class ResultsController {
     private static final Logger logger = LoggerFactory.getLogger(ResultsController.class);
+    private final PdfUrlResolver pdfResolver = new PdfUrlResolver();
 
     // FXML injected components
     @FXML private TableView<SearchResult> resultsTable;
@@ -423,12 +425,21 @@ public class ResultsController {
     private void onDownloadPdf() {
         SearchResult selected = resultsTable.getSelectionModel().getSelectedItem();
         if (selected instanceof AcademicPaper paper && paper.getPdfUrl() != null) {
-            String homeDir = System.getProperty("user.home");
+           String homeDir = System.getProperty("user.home");
             String downloadDir = homeDir + "/Downloads/LibSearch";
+
+            // Resolve PDF URL on-demand if it's a DOI link
+            String pdfUrl = paper.getPdfUrl();
+            if (pdfUrl != null && pdfUrl.startsWith("https://doi.org/")) {
+                String doi = pdfUrl.replace("https://doi.org/", "");
+                logger.info("Resolving PDF URL for DOI: {}", doi);
+                String resolvedUrl = pdfResolver.resolvePdfUrl(pdfUrl, doi);
+                pdfUrl = resolvedUrl;
+            }
 
             String downloadId = downloadService.queueDownload(
                     selected.getId(),
-                    paper.getPdfUrl(),
+                    pdfUrl,
                     downloadDir
             );
 
@@ -657,10 +668,17 @@ public class ResultsController {
                 if (result instanceof AcademicPaper paper && paper.getPdfUrl() != null) {
                     String homeDir = System.getProperty("user.home");
                     String downloadDir = homeDir + "/Downloads/LibSearch";
-                    downloadService.queueDownload(result.getId(), paper.getPdfUrl(), downloadDir);
+
+                    // ADD RESOLUTION HERE TOO
+                    String pdfUrl = paper.getPdfUrl();
+                    if (pdfUrl.startsWith("https://doi.org/")) {
+                        String doi = pdfUrl.replace("https://doi.org/", "");
+                        String resolvedUrl = pdfResolver.resolvePdfUrl(pdfUrl, doi);
+                        pdfUrl = resolvedUrl;
+                    }
+
+                    downloadService.queueDownload(result.getId(), pdfUrl, downloadDir);
                     if (mainController != null) mainController.setStatus("Download queued");
-                } else {
-                    if (mainController != null) mainController.setStatus("No PDF available");
                 }
             });
         }

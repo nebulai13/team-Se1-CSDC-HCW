@@ -40,6 +40,8 @@ public class SemanticScholarConnector implements SourceConnector {
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String apiKey;
+    private long lastRequestTime = 0;
+    private static final long MIN_REQUEST_INTERVAL_MS = 1000; // 1 request per second for free tier
 
     public SemanticScholarConnector() {
         this.httpClient = HttpClientFactory.getDefaultClient();
@@ -80,6 +82,18 @@ public class SemanticScholarConnector implements SourceConnector {
 
             logger.debug("Semantic Scholar search URL: {}", url);
 
+            // Implement rate limiting
+            synchronized (this) {
+                long now = System.currentTimeMillis();
+                long timeSinceLastRequest = now - lastRequestTime;
+                if (timeSinceLastRequest < MIN_REQUEST_INTERVAL_MS) {
+                    long sleepTime = MIN_REQUEST_INTERVAL_MS - timeSinceLastRequest;
+                    logger.debug("Rate limiting: sleeping for {}ms", sleepTime);
+                    Thread.sleep(sleepTime);
+                }
+                lastRequestTime = System.currentTimeMillis();
+            }
+
             Request.Builder requestBuilder = new Request.Builder()
                     .url(url.toString())
                     .get();
@@ -91,15 +105,44 @@ public class SemanticScholarConnector implements SourceConnector {
 
             Request request = requestBuilder.build();
 
-            try (Response response = httpClient.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    throw new ConnectorException("Semantic Scholar API returned: " + response.code());
-                }
+            // Retry logic with exponential backoff for 429 errors
+            int maxRetries = 3;
+            int retryCount = 0;
+            long backoffMs = 2000; // Start with 2 seconds
 
-                String jsonContent = response.body().string();
-                return parseJsonResponse(jsonContent);
+            while (retryCount < maxRetries) {
+                try (Response response = httpClient.newCall(request).execute()) {
+                    if (response.code() == 429) {
+                        // Rate limited - backoff and retry
+                        retryCount++;
+                        if (retryCount >= maxRetries) {
+                            logger.warn("Semantic Scholar rate limit exceeded after {} retries", maxRetries);
+                            throw new ConnectorException("Semantic Scholar API returned: " + response.code());
+                        }
+
+                        logger.info("Rate limited by Semantic Scholar, backing off for {}ms (attempt {}/{})",
+                                backoffMs, retryCount, maxRetries);
+                        Thread.sleep(backoffMs);
+                        backoffMs *= 2; // Exponential backoff
+                        continue;
+                    }
+
+                    if (!response.isSuccessful()) {
+                        throw new ConnectorException("Semantic Scholar API returned: " + response.code());
+                    }
+
+                    String jsonContent = response.body().string();
+                    return parseJsonResponse(jsonContent);
+                }
             }
 
+            // If we exhausted retries
+            throw new ConnectorException("Semantic Scholar rate limit exceeded after retries");
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Semantic Scholar search interrupted", e);
+            throw new ConnectorException("Semantic Scholar search interrupted", e);
         } catch (IOException e) {
             logger.error("Semantic Scholar search failed", e);
             throw new ConnectorException("Semantic Scholar search failed", e);
@@ -300,8 +343,8 @@ public class SemanticScholarConnector implements SourceConnector {
     public boolean isAvailable() {
         try {
             Request.Builder requestBuilder = new Request.Builder()
-                    .url("https://api.semanticscholar.org/")
-                    .head();
+                    .url("https://api.semanticscholar.org/graph/v1/paper/search?query=test&limit=1")
+                    .get();
 
             if (apiKey != null && !apiKey.isEmpty()) {
                 requestBuilder.header("x-api-key", apiKey);
@@ -310,11 +353,14 @@ public class SemanticScholarConnector implements SourceConnector {
             Request request = requestBuilder.build();
 
             try (Response response = httpClient.newCall(request).execute()) {
-                return response.isSuccessful();
+                // Consider available if we get 200 OK or 429 Rate Limited
+                // 429 means the API is working, just rate limited
+                return response.isSuccessful() || response.code() == 429;
             }
         } catch (Exception e) {
-            logger.warn("Semantic Scholar availability check failed", e);
-            return false;
+            logger.debug("Semantic Scholar availability check failed: {}", e.getMessage());
+            // Return true by default - assume available unless proven otherwise
+            return true;
         }
     }
 }
