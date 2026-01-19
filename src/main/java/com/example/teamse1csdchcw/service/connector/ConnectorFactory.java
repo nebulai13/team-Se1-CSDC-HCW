@@ -10,21 +10,30 @@ import java.util.*;
  * Factory for creating SourceConnector instances.
  * Uses singleton pattern to cache connector instances.
  */
+// factory pattern: centralize obj creation - easy to add new connectors
+// singleton pattern: single shared instance w/ cached connectors
 public class ConnectorFactory {
     private static final Logger logger = LoggerFactory.getLogger(ConnectorFactory.class);
+
+    // singleton instance - shared across entire app
     private static ConnectorFactory instance;
 
+    // cache of connector instances - one per source type
+    // avoids recreating expensive http clients repeatedly
     private final Map<SourceType, SourceConnector> connectors;
 
+    // private constructor - prevents external instantiation (singleton pattern)
     private ConnectorFactory() {
         this.connectors = new HashMap<>();
-        initializeConnectors();
+        initializeConnectors();  // eager init all connectors at startup
     }
 
     /**
      * Get singleton instance of ConnectorFactory.
      */
+    // synchronized prevents race conditions w/ multiple threads
     public static synchronized ConnectorFactory getInstance() {
+        // lazy init - create instance on first access
         if (instance == null) {
             instance = new ConnectorFactory();
         }
@@ -36,13 +45,13 @@ public class ConnectorFactory {
      */
     private void initializeConnectors() {
         try {
-            // Academic sources
+            // register all implemented academic source connectors
             registerConnector(new ArxivConnector());
             registerConnector(new PubMedConnector());
             registerConnector(new CrossRefConnector());
             registerConnector(new SemanticScholarConnector());
 
-            // TODO: Add more connectors as they're implemented:
+            // future connectors can be added here:
             // registerConnector(new GoogleScholarConnector());
             // registerConnector(new PrimoConnector());
             // registerConnector(new OBVConnector());
@@ -53,6 +62,7 @@ public class ConnectorFactory {
 
             logger.info("Initialized {} connectors", connectors.size());
         } catch (Exception e) {
+            // log but don't crash - app can work w/ partial connector set
             logger.error("Failed to initialize connectors", e);
         }
     }
@@ -61,6 +71,7 @@ public class ConnectorFactory {
      * Register a connector instance.
      */
     private void registerConnector(SourceConnector connector) {
+        // use source type as map key for O(1) lookup
         SourceType type = connector.getSourceType();
         connectors.put(type, connector);
         logger.debug("Registered connector: {}", type.getDisplayName());
@@ -73,6 +84,7 @@ public class ConnectorFactory {
      * @return the connector, or null if not available
      */
     public SourceConnector getConnector(SourceType type) {
+        // simple lookup - O(1) access to cached connector
         return connectors.get(type);
     }
 
@@ -85,11 +97,13 @@ public class ConnectorFactory {
     public List<SourceConnector> getConnectors(Set<SourceType> types) {
         List<SourceConnector> result = new ArrayList<>();
 
+        // fetch each requested connector - skip if not registered
         for (SourceType type : types) {
             SourceConnector connector = getConnector(type);
             if (connector != null) {
                 result.add(connector);
             } else {
+                // warn but continue - partial results better than none
                 logger.warn("No connector available for source type: {}", type);
             }
         }
@@ -103,6 +117,7 @@ public class ConnectorFactory {
      * @return list of all connectors
      */
     public List<SourceConnector> getAllConnectors() {
+        // return copy to prevent external modification of cache
         return new ArrayList<>(connectors.values());
     }
 
@@ -115,14 +130,17 @@ public class ConnectorFactory {
     public List<SourceConnector> getAvailableConnectors() {
         List<SourceConnector> available = new ArrayList<>();
 
+        // health check each connector - api may be down
         for (SourceConnector connector : connectors.values()) {
             try {
+                // isAvailable() typically does lightweight connectivity test
                 if (connector.isAvailable()) {
                     available.add(connector);
                 } else {
                     logger.debug("Connector not available: {}", connector.getSourceType());
                 }
             } catch (Exception e) {
+                // catch exceptions from health checks - don't crash entire app
                 logger.warn("Error checking availability for {}: {}",
                         connector.getSourceType(), e.getMessage());
             }
@@ -138,6 +156,7 @@ public class ConnectorFactory {
      * @return true if a connector is registered
      */
     public boolean hasConnector(SourceType type) {
+        // simple presence check - doesn't test if actually working
         return connectors.containsKey(type);
     }
 
@@ -156,6 +175,7 @@ public class ConnectorFactory {
      * @return set of source types
      */
     public Set<SourceType> getRegisteredSourceTypes() {
+        // return copy of keyset to prevent modification
         return new HashSet<>(connectors.keySet());
     }
 
@@ -167,6 +187,7 @@ public class ConnectorFactory {
     public List<SourceConnector> getDefaultAcademicConnectors() {
         List<SourceConnector> academic = new ArrayList<>();
 
+        // predefined set of reliable academic sources
         SourceType[] defaultTypes = {
                 SourceType.ARXIV,
                 SourceType.PUBMED,
@@ -174,6 +195,7 @@ public class ConnectorFactory {
                 SourceType.SEMANTIC_SCHOLAR
         };
 
+        // fetch each default connector - skip if not registered
         for (SourceType type : defaultTypes) {
             SourceConnector connector = getConnector(type);
             if (connector != null) {
@@ -188,6 +210,7 @@ public class ConnectorFactory {
      * Reset the factory (mainly for testing).
      */
     public void reset() {
+        // clear cache and reinit - useful for testing different configs
         connectors.clear();
         initializeConnectors();
     }

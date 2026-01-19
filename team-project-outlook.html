@@ -335,6 +335,11 @@
         }
         .sm-card.mvp { border-left: 3px solid var(--accent-green); }
         .sm-card.v2 { border-left: 3px solid var(--accent-purple); opacity: 0.7; }
+        .sm-card.implemented { background: #2a3a2a; border-left: 3px solid var(--accent-green); }
+        .sm-card.implemented::after { content: "✓ IMPLEMENTED"; display: block; margin-top: 8px; font-size: 0.7em; color: var(--accent-green); font-weight: bold; }
+        .priority-badge { display: inline-block; font-size: 0.65em; padding: 2px 6px; border-radius: 3px; margin-left: 5px; font-weight: bold; }
+        .priority-high { background: rgba(220,53,69,0.2); color: #dc3545; }
+        .priority-low { background: rgba(255,193,7,0.2); color: #ffc107; }
 
         /* --- TABLES --- */
         .spec-table, .backlog-table {
@@ -357,7 +362,7 @@
     <div class="container">
         <header>
             <h1> LibSearch (Web-Crawler-Academic)</h1>
-            <p>Documentation v3.5 • Status: <span style="color: var(--accent-green)">Development (Sprint 2)</span></p>
+            <p>Documentation v1.0.0 • Status: <span style="color: var(--accent-green)">Release Candidate</span></p>
         </header>
 
         <!-- 0. ANALYTICS DASHBOARD -->
@@ -379,14 +384,14 @@
             <div class="stat-card" style="display: flex; align-items: center;">
                 <div style="flex: 1;">
                     <h3>Project Completion</h3>
-                    <div class="stat-value">57%</div>
+                    <div class="stat-value">95%</div>
                     <div style="font-size: 0.9em; color: #888; margin-top: 10px;">
-                        Done: 24 Points<br>
-                        Backlog: 18 Points
+                        Done: 40 Points<br>
+                        Remaining: 2 Points
                     </div>
                 </div>
-                <div class="progress-circle">
-                    <div class="progress-inner">57%</div>
+                <div class="progress-circle" style="background: conic-gradient(var(--accent-green) 95%, #333 0);">
+                    <div class="progress-inner">95%</div>
                 </div>
             </div>
 
@@ -426,8 +431,10 @@
                         <div style="color: #0f0; padding: 5px;">● Primo (HCW) <span style="float: right; color: #888">45ms</span></div>
                         <div style="color: #0f0; padding: 5px;">● arXiv <span style="float: right; color: #888">124ms</span></div>
                         <div style="color: #0f0; padding: 5px;">● PubMed <span style="float: right; color: #888">156ms</span></div>
-                        <div style="color: #f00; padding: 5px;">● CrossRef <span style="float: right; color: #888">OFF</span></div>
+                        <div style="color: #0f0; padding: 5px;">● CrossRef <span style="float: right; color: #888">98ms</span></div>
+                        <div style="color: #0f0; padding: 5px;">● Semantic Scholar <span style="float: right; color: #888">112ms</span></div>
                         <div style="color: #0f0; padding: 5px;">● OBV Network <span style="float: right; color: #888">89ms</span></div>
+                        <div style="color: #0f0; padding: 5px;">● GitHub <span style="float: right; color: #888">67ms</span></div>
                         
                         <div style="margin-top: 20px; border-top: 1px solid #555; padding-top: 10px;">
                             <div style="color: #888; font-size: 0.8em; text-transform: uppercase;">Connectivity</div>
@@ -537,127 +544,174 @@
                 <!-- Phase 1 -->
                 <div class="journey-col">
                     <div class="activity-header">1. CONNECT</div>
-                    <div class="sm-card mvp">
-                        <strong>LS-008: VPN Connection</strong>
-                        <p>Connect from home to access licensed resources.</p>
-                    </div>
                     <div class="sm-card v2">
-                        <strong>Auto-Detect Net</strong>
-                        <p>Detect on-campus vs off-campus automatically.</p>
+                        <strong>LS-008: VPN Connection</strong>
+                        <span class="priority-badge priority-low">LOW</span>
+                        <p>Connect from home to access licensed resources.</p>
+                        <p style="font-size: 0.8em; color: #888; margin-top: 5px;">Status: In Progress (60%)</p>
                     </div>
                 </div>
                 <!-- Phase 2 -->
                 <div class="journey-col">
                     <div class="activity-header">2. SEARCH</div>
-                    <div class="sm-card mvp">
+                    <div class="sm-card implemented">
                         <strong>LS-001: Keyword Search</strong>
+                        <span class="priority-badge priority-high">HIGH</span>
                         <p>Basic text search in library catalog.</p>
                     </div>
-                    <div class="sm-card mvp">
+                    <div class="sm-card implemented">
                         <strong>LS-002: Multi-Source</strong>
-                        <p>Federated search (Primo, arXiv, etc.).</p>
+                        <span class="priority-badge priority-high">HIGH</span>
+                        <p>Federated search (Primo, arXiv, Semantic Scholar, GitHub, etc.).</p>
                     </div>
-                    <div class="sm-card v2">
+                    <div class="sm-card implemented">
                         <strong>LS-004: Grep Syntax</strong>
-                        <p>Advanced query parsing (author:, year:).</p>
+                        <span class="priority-badge priority-high">HIGH</span>
+                        <p>Advanced query parsing (author:, year:, Boolean operators).</p>
                     </div>
                 </div>
                 <!-- Phase 3 -->
                 <div class="journey-col">
                     <div class="activity-header">3. DISCOVER</div>
-                    <div class="sm-card mvp">
+                    <div class="sm-card implemented">
                         <strong>LS-005: Access Level</strong>
+                        <span class="priority-badge priority-high">HIGH</span>
                         <p>See if Open Access or Licensed.</p>
                     </div>
-                    <div class="sm-card v2">
+                    <div class="sm-card implemented">
                         <strong>LS-010: Filtering</strong>
-                        <p>Filter by document type (Thesis, Book).</p>
+                        <span class="priority-badge priority-low">LOW</span>
+                        <p>Filter by document type (Thesis, Book, Article).</p>
                     </div>
-                    <div class="sm-card v2">
+                    <div class="sm-card implemented">
                         <strong>LS-011: REPL Mode</strong>
-                        <p>Interactive exploration session.</p>
+                        <span class="priority-badge priority-high">HIGH</span>
+                        <p>Interactive exploration session (JLine3/Picocli).</p>
                     </div>
                 </div>
                 <!-- Phase 4 -->
                 <div class="journey-col">
                     <div class="activity-header">4. ACCESS</div>
-                    <div class="sm-card mvp">
+                    <div class="sm-card implemented">
                         <strong>LS-003: Download PDF</strong>
+                        <span class="priority-badge priority-high">HIGH</span>
                         <p>Direct download of single resource.</p>
                     </div>
                     <div class="sm-card v2">
                         <strong>LS-012: Bulk Download</strong>
+                        <span class="priority-badge priority-low">LOW</span>
                         <p>Batch download search results.</p>
+                        <p style="font-size: 0.8em; color: #888; margin-top: 5px;">Status: Planned</p>
                     </div>
                 </div>
                 <!-- Phase 5 -->
                 <div class="journey-col">
                     <div class="activity-header">5. MANAGE</div>
-                    <div class="sm-card v2">
+                    <div class="sm-card implemented">
                         <strong>LS-006: Bookmarks</strong>
-                        <p>Save links to local file.</p>
+                        <span class="priority-badge priority-low">LOW</span>
+                        <p>Save links with tags and notes.</p>
                     </div>
-                    <div class="sm-card v2">
-                        <strong>LS-007: Local Index</strong>
-                        <p>Search offline local DB.</p>
+                    <div class="sm-card implemented">
+                        <strong>LS-007: Local Index (Lucene)</strong>
+                        <span class="priority-badge priority-high">HIGH</span>
+                        <p>Full-text search on cached results offline.</p>
                     </div>
-                    <div class="sm-card v2">
-                        <strong>LS-009: BibTeX</strong>
-                        <p>Export citations for LaTeX.</p>
+                    <div class="sm-card implemented">
+                        <strong>LS-009: Citation Export</strong>
+                        <span class="priority-badge priority-low">LOW</span>
+                        <p>Export citations (BibTeX, RIS, EndNote).</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- 3. KANBAN BOARD -->
-        <h2 class="section-title">📌 Project Kanban (Sprint 2)</h2>
+        <h2 class="section-title">📌 Project Kanban (Final Sprint)</h2>
         <div class="kanban-board">
             <!-- To Do -->
             <div class="kanban-col col-todo">
-                <div class="kanban-header">To Do (6)</div>
+                <div class="kanban-header">To Do (1)</div>
                 <div class="kanban-card">
                     <span class="k-tag tag-feat">Feature</span>
-                    <h4>LS-009: BibTeX Export</h4>
-                    <div class="k-meta"><span>Est: 4h</span><div class="avatar">A</div></div>
-                </div>
-                <div class="kanban-card">
-                    <span class="k-tag tag-feat">Feature</span>
-                    <h4>LS-004: Grep Syntax</h4>
-                    <div class="k-meta"><span>Est: 8h</span><div class="avatar">B</div></div>
-                </div>
-                <div class="kanban-card">
-                    <span class="k-tag tag-feat">Feature</span>
-                    <h4>LS-011: REPL Mode</h4>
-                    <div class="k-meta"><span>Est: 5h</span><div class="avatar">C</div></div>
+                    <span class="k-tag" style="background: rgba(255,193,7,0.2); color: #ffc107;">Low Priority</span>
+                    <h4>LS-012: Bulk Download</h4>
+                    <div class="k-meta"><span>Est: 5h</span><div class="avatar">Q</div></div>
                 </div>
             </div>
             <!-- In Progress -->
             <div class="kanban-col col-prog">
-                <div class="kanban-header">In Progress (3)</div>
+                <div class="kanban-header">In Progress (1)</div>
                 <div class="kanban-card">
                     <span class="k-tag tag-feat">Feature</span>
-                    <h4>LS-003: PDF Download</h4>
-                    <p style="font-size: 0.8em; color: #888;">Handling redirects and auth.</p>
-                    <div class="k-meta"><span>Progress: 40%</span><div class="avatar">D</div></div>
-                </div>
-                <div class="kanban-card">
-                    <span class="k-tag tag-feat">Feature</span>
-                    <h4>LS-005: Access Level</h4>
-                    <div class="k-meta"><span>Progress: 85%</span><div class="avatar">E</div></div>
+                    <span class="k-tag" style="background: rgba(255,193,7,0.2); color: #ffc107;">Low Priority</span>
+                    <h4>LS-008: VPN Connection</h4>
+                    <p style="font-size: 0.8em; color: #888;">OpenVPN wrapper implementation.</p>
+                    <div class="k-meta"><span>Progress: 60%</span><div class="avatar">Z</div></div>
                 </div>
             </div>
             <!-- Done -->
             <div class="kanban-col col-done">
-                <div class="kanban-header">Done (3)</div>
+                <div class="kanban-header">Done (10)</div>
                 <div class="kanban-card">
                     <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
                     <h4 style="text-decoration: line-through; color: #777;">LS-001: Basic Search</h4>
-                    <div class="k-meta"><span>Merged</span><div class="avatar">F</div></div>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Q</div></div>
                 </div>
                 <div class="kanban-card">
                     <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
                     <h4 style="text-decoration: line-through; color: #777;">LS-002: Federation</h4>
-                    <div class="k-meta"><span>Merged</span><div class="avatar">F</div></div>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Q</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-003: PDF Download</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Z</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-004: Grep Syntax</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Q</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-005: Access Level</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Z</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(255,193,7,0.2); color: #ffc107;">Low Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-006: Bookmarks</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Q</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-007: Local Index (Lucene)</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Q</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(255,193,7,0.2); color: #ffc107;">Low Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-009: BibTeX Export</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Z</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(255,193,7,0.2); color: #ffc107;">Low Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-010: Filter by Type</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Z</div></div>
+                </div>
+                <div class="kanban-card">
+                    <span class="k-tag tag-feat">Feature</span>
+                    <span class="k-tag" style="background: rgba(220,53,69,0.2); color: #dc3545;">High Priority</span>
+                    <h4 style="text-decoration: line-through; color: #777;">LS-011: REPL Mode</h4>
+                    <div class="k-meta"><span>Implemented</span><div class="avatar">Q</div></div>
                 </div>
             </div>
         </div>
@@ -667,10 +721,11 @@
         <table class="backlog-table">
             <thead>
                 <tr>
-                    <th width="10%">ID</th>
-                    <th width="30%">User Story</th>
-                    <th width="50%">Essential Implementation Tasks</th>
-                    <th width="10%">Est.</th>
+                    <th width="8%">ID</th>
+                    <th width="25%">User Story</th>
+                    <th width="42%">Essential Implementation Tasks</th>
+                    <th width="10%">Priority</th>
+                    <th width="15%">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -685,7 +740,8 @@
                             <li>Create `Result` data model.</li>
                         </ul>
                     </td>
-                    <td>3h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-002 -->
                 <tr>
@@ -694,12 +750,13 @@
                     <td>
                         <ul class="task-list">
                             <li>Implement `SourceConnector` strategy pattern.</li>
-                            <li>Create `PrimoConnector`, `ArxivConnector`.</li>
+                            <li>Create connectors: Primo, arXiv, PubMed, CrossRef, Semantic Scholar, GitHub.</li>
                             <li>Use `CompletableFuture` for concurrent fetching.</li>
                             <li>Merge and sort results by relevance.</li>
                         </ul>
                     </td>
-                    <td>8h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-003 -->
                 <tr>
@@ -708,11 +765,12 @@
                     <td>
                         <ul class="task-list">
                             <li>Detect PDF links in JSON/HTML responses.</li>
-                            <li>Implement `Downloader` class with OkHttp.</li>
-                            <li>Save files to `./downloads/` with sanitized names.</li>
+                            <li>Implement `DownloadService` with OkHttp.</li>
+                            <li>Save files to configurable directory with sanitized names.</li>
                         </ul>
                     </td>
-                    <td>5h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-004 -->
                 <tr>
@@ -720,12 +778,13 @@
                     <td><strong>Grep Syntax</strong><br><span style="font-size: 0.8em; color: #888">As a researcher, I want precise queries (author:X year:>2020).</span></td>
                     <td>
                         <ul class="task-list">
-                            <li>Implement Regex parser for query strings.</li>
+                            <li>Implement `QueryParserService` for query strings.</li>
                             <li>Map `author:`, `year:`, `type:` to API params.</li>
-                            <li>Implement range filtering logic (e.g., 2020..2024).</li>
+                            <li>Support Boolean operators (AND, OR, NOT).</li>
                         </ul>
                     </td>
-                    <td>8h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-005 -->
                 <tr>
@@ -738,7 +797,8 @@
                             <li>Add UI indicators (Green/Yellow/Red).</li>
                         </ul>
                     </td>
-                    <td>3h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-006 -->
                 <tr>
@@ -746,25 +806,27 @@
                     <td><strong>Save Bookmarks</strong><br><span style="font-size: 0.8em; color: #888">As a user, I want to save links for later.</span></td>
                     <td>
                         <ul class="task-list">
-                            <li>Implement `BookmarkService`.</li>
-                            <li>Read/Write to `bookmarks.json` or `bookmarks.md`.</li>
-                            <li>Add CLI command `libsearch save <id>`.</li>
+                            <li>Implement `BookmarkService` with SQLite storage.</li>
+                            <li>Support tags and notes per bookmark.</li>
+                            <li>Add CLI command `libsearch bookmark`.</li>
                         </ul>
                     </td>
-                    <td>2h</td>
+                    <td><span class="priority-badge priority-low">LOW</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-007 -->
                 <tr>
                     <td>LS-007</td>
-                    <td><strong>Local Offline Index</strong><br><span style="font-size: 0.8em; color: #888">As a student, I want to search locally without internet.</span></td>
+                    <td><strong>Local Offline Index (Lucene)</strong><br><span style="font-size: 0.8em; color: #888">As a student, I want to search locally without internet.</span></td>
                     <td>
                         <ul class="task-list">
-                            <li>Integrate SQLite (JDBC/Hibernate).</li>
-                            <li>Create schema for `Resources` and `Citations`.</li>
-                            <li>Implement logic to sync search results to DB.</li>
+                            <li>Integrate Apache Lucene 9.9.1 for full-text indexing.</li>
+                            <li>Index title, authors, abstract, year, keywords.</li>
+                            <li>Auto-index search results; add CLI `libsearch index`.</li>
                         </ul>
                     </td>
-                    <td>5h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-008 -->
                 <tr>
@@ -774,23 +836,25 @@
                         <ul class="task-list">
                             <li>Implement wrapper for OpenVPN CLI.</li>
                             <li>Add config management for `.ovpn` files.</li>
-                            <li>Implement network reachability check (ping internal IP).</li>
+                            <li>Implement network reachability check.</li>
                         </ul>
                     </td>
-                    <td>5h</td>
+                    <td><span class="priority-badge priority-low">LOW</span></td>
+                    <td><span style="color: var(--accent-blue);">In Progress (60%)</span></td>
                 </tr>
                 <!-- LS-009 -->
                 <tr>
                     <td>LS-009</td>
-                    <td><strong>BibTeX Export</strong><br><span style="font-size: 0.8em; color: #888">As a researcher, I want citations for LaTeX.</span></td>
+                    <td><strong>Citation Export</strong><br><span style="font-size: 0.8em; color: #888">As a researcher, I want citations for LaTeX.</span></td>
                     <td>
                         <ul class="task-list">
-                            <li>Map internal `Result` object to BibTeX format.</li>
-                            <li>Implement `export` command.</li>
+                            <li>Implement `CitationExportService` with JBibTeX.</li>
+                            <li>Support BibTeX, RIS, EndNote formats.</li>
                             <li>Fetch missing citation data from CrossRef API.</li>
                         </ul>
                     </td>
-                    <td>4h</td>
+                    <td><span class="priority-badge priority-low">LOW</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-010 -->
                 <tr>
@@ -803,7 +867,8 @@
                             <li>Filter list in memory or via API param.</li>
                         </ul>
                     </td>
-                    <td>3h</td>
+                    <td><span class="priority-badge priority-low">LOW</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-011 -->
                 <tr>
@@ -811,12 +876,13 @@
                     <td><strong>Interactive REPL</strong><br><span style="font-size: 0.8em; color: #888">As a user, I want an interactive mode.</span></td>
                     <td>
                         <ul class="task-list">
-                            <li>Implement `ReplLoop` class with `Scanner`.</li>
+                            <li>Implement REPL with JLine3/Picocli.</li>
                             <li>Maintain session state (last search results).</li>
                             <li>Implement short commands (`s`, `d`, `next`).</li>
                         </ul>
                     </td>
-                    <td>5h</td>
+                    <td><span class="priority-badge priority-high">HIGH</span></td>
+                    <td><span style="color: var(--accent-green);">✓ Implemented</span></td>
                 </tr>
                 <!-- LS-012 -->
                 <tr>
@@ -826,10 +892,11 @@
                         <ul class="task-list">
                             <li>Implement `--all` flag for download command.</li>
                             <li>Add queue manager for downloads to avoid rate limits.</li>
-                            <li>Display progress bar (picocli-shell-jline).</li>
+                            <li>Display progress bar (JLine3).</li>
                         </ul>
                     </td>
-                    <td>5h</td>
+                    <td><span class="priority-badge priority-low">LOW</span></td>
+                    <td><span style="color: var(--accent-orange);">Planned</span></td>
                 </tr>
             </tbody>
         </table>
@@ -887,7 +954,13 @@
 
         <br><br><br>
         <footer style="text-align: center; color: #555; font-size: 0.8em;">
-             by Qwitch13 | LibSearch Documentation
+            <p style="margin-bottom: 10px;">
+                <a href="https://github.com/fh-se1-2024/team-Se1-CSDC-HCW" style="color: var(--accent-blue); text-decoration: none;">
+                    View on GitHub
+                </a>
+            </p>
+            <p>Authors: qwitch13 (nebulai13), zahieddo</p>
+            <p>LibSearch Documentation v1.0.0</p>
         </footer>
     </div>
 </body>

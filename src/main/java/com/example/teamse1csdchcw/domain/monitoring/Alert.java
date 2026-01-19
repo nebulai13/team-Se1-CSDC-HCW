@@ -4,35 +4,59 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+// represents saved search alert - monitors for new papers matching criteria
 public class Alert {
+    // unique identifier for this alert in db
     private String id;
+
+    // user-friendly name to identify alert ("machine learning papers")
     private String name;
+
+    // search terms to watch for - matches if any appear
     private List<String> keywords;
+
+    // optional - only alert for specific author's work
     private String authorFilter;
+
+    // optional year range - filter alerts by pub date
     private Integer yearFrom;
     private Integer yearTo;
+
+    // whether alert is active - can pause w/o deleting
     private boolean enabled;
+
+    // how to notify user when matches found
     private NotificationType notificationType;
+
+    // where to send notification (email addr, log file, etc)
     private String notificationTarget;
+
+    // when alert was created
     private LocalDateTime createdAt;
+
+    // last time system checked for new matches
     private LocalDateTime lastChecked;
+
+    // total count of papers matched since creation
     private int matchCount;
 
+    // notification delivery methods
     public enum NotificationType {
-        CONSOLE,
-        LOG,
-        EMAIL
+        CONSOLE,  // print to stdout
+        LOG,      // write to log file
+        EMAIL     // send email notification
     }
 
+    // default constructor - set sensible defaults
     public Alert() {
-        this.keywords = new ArrayList<>();
-        this.enabled = true;
-        this.notificationType = NotificationType.CONSOLE;
-        this.createdAt = LocalDateTime.now();
-        this.matchCount = 0;
+        this.keywords = new ArrayList<>();              // init empty list
+        this.enabled = true;                            // alerts start active
+        this.notificationType = NotificationType.CONSOLE;  // default output
+        this.createdAt = LocalDateTime.now();           // timestamp creation
+        this.matchCount = 0;                            // start w/ zero matches
     }
 
-    // Getters and setters
+    // getters/setters - standard bean pattern for all props
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -69,6 +93,7 @@ public class Alert {
     public int getMatchCount() { return matchCount; }
     public void setMatchCount(int matchCount) { this.matchCount = matchCount; }
 
+    // debug/logging output - show key alert properties
     @Override
     public String toString() {
         return String.format("Alert{id=%s, name=%s, keywords=%s, enabled=%s}",

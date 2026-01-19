@@ -13,19 +13,28 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Repository for search history persistence.
+ * repository layer - manages search query history in sqlite
+ * tracks all user searches w/ timestamps, result counts, and parsed query details
+ * uses jackson to serialize SearchQuery objs as json for flexible storage
+ * enables features like: search history view, query suggestions, usage analytics
+ * follows standard repository pattern - crud operations + custom queries
  */
 public class SearchHistoryRepository {
     private static final Logger logger = LoggerFactory.getLogger(SearchHistoryRepository.class);
+
+    // jackson for converting SearchQuery objs to/from json
     private final ObjectMapper objectMapper;
 
+    /** constructor - init jackson w/ module support for LocalDateTime, etc */
     public SearchHistoryRepository() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.findAndRegisterModules();
     }
 
     /**
-     * Save a search query to history.
+     * save search query to history
+     * stores both raw query text and full parsed SearchQuery as json
+     * links to session for context tracking
      */
     public String save(SearchQuery query, String sessionId, int resultCount) throws SQLException {
         String id = UUID.randomUUID().toString();
@@ -42,7 +51,7 @@ public class SearchHistoryRepository {
             stmt.setString(2, sessionId);
             stmt.setString(3, query.getOriginalQuery());
 
-            // Serialize the entire SearchQuery as JSON
+            // serialize entire SearchQuery obj to json - includes filters, operators, etc
             String parsedQueryJson = objectMapper.writeValueAsString(query);
             stmt.setString(4, parsedQueryJson);
 

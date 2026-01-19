@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'application'
     id 'org.openjfx.javafxplugin' version '0.1.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'com.example'
@@ -26,7 +27,7 @@ javafx {
 
 application {
     mainModule = 'com.example.teamse1csdchcw'
-    mainClass = 'com.example.teamse1csdchcw.HelloApplication'
+    mainClass = 'com.example.teamse1csdchcw.Launcher'
 }
 
 dependencies {
@@ -95,10 +96,19 @@ compileJava {
     classpath = files()
 }
 
-compileTestJava {
-    enabled = true
-}
+shadowJar {
+    archiveBaseName.set('team-Se1-CSDC-HCW')
+    archiveClassifier.set('all')
+    archiveVersion.set('1.0-SNAPSHOT')
 
-test {
-    enabled = true
+    mergeServiceFiles()
+
+    // Exclude module-info to make the JAR non-modular (allows fat JAR to work)
+    exclude 'module-info.class'
+
+    manifest {
+        attributes(
+            'Main-Class': 'com.example.teamse1csdchcw.Launcher'
+        )
+    }
 }

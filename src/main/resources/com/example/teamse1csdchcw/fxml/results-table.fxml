@@ -10,11 +10,6 @@
 
     <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="220" minWidth="180"/>
-
-            <!-- Selection column -->
-            <TableColumn fx:id="selectColumn" text="" prefWidth="40" minWidth="40" maxWidth="40"/>
-
             <!-- Title column -->
             <TableColumn fx:id="titleColumn" text="Title" prefWidth="350" minWidth="200"/>
 
@@ -33,8 +28,8 @@
             <!-- Citations column -->
             <TableColumn fx:id="citationsColumn" text="Citations" prefWidth="80" minWidth="70" maxWidth="100"/>
 
-            <!-- Actions column -->
-            <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="180" minWidth="150"/>
+            <!-- Actions column (includes selection checkbox) -->
+            <TableColumn fx:id="actionsColumn" text="Actions" prefWidth="200" minWidth="180"/>
         </columns>
 
         <placeholder>
