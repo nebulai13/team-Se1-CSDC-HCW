@@ -45,3 +45,4 @@ build
 /.idea/copilot.data.migration.ask.xml
 .idea/
 ..txt
+.gradle/
