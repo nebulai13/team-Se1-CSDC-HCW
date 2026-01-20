@@ -1,9 +1,14 @@
+# Gradle
 .gradle/
+build/
+out/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven (if applicable)
 target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-.kotlin
 
 # IntelliJ IDEA
 .idea/
@@ -11,23 +16,7 @@ target/
 *.iws
 *.ipr
 
-# Gradle
-.gradle/
-build/
-
-# Library search
-local.properties
-
-### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
-*.iws
-*.iml
-*.ipr
-
-### Eclipse ###
+# Eclipse
 .apt_generated
 .classpath
 .factorypath
@@ -36,26 +25,25 @@ local.properties
 .springBeans
 .sts4-cache
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# VS Code
 .vscode/
 
-### Mac OS ###
+# macOS
 .DS_Store
 
-#gradle
-.gradle/
-build
-/.idea/copilot.data.migration.ask.xml
-.idea/
-..txt
-.gradle/
+# Kotlin
+.kotlin/
+
+# Local configuration
+local.properties
+gradle.properties
+
+# Exclude specific txt files if needed (remove if you want READMEs in Git)
+# *.md
